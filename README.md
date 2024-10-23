@@ -90,7 +90,7 @@ Script must unload 'FAT' and 'ATTRIBFT.LLL' if desired.
 After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !  
 Use 'FATLFN.LLL help' for help (most of the time identical to command-line version)  
 
-#### HISTORY
+### HISTORY
 Version 0.2  
 First published version
 
