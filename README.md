@@ -77,7 +77,7 @@ First published version
 This is the Loosely Linked Library version of the script.  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz).  
 Returns 'result=1' if succes, variable 'message' if failure.  
-Exception for functions \<dir> and \<dirx>: without "\> nul" at the end normal operation.  
+Exception for functions \<dir> and \<dirx> without "\> nul" at the end: normal operation.  
 With "\> nul"  after FILE:  
 \<dir> returns 'result=0' if directory is empty, otherwise count of Directory-entries  
 \<dirx> returns 'result=0' if directory is empty, otherwise count of Long File Names in Directory  
