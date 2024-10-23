@@ -84,6 +84,7 @@ With "\> nul"  after FILE:
 If a script uses FATLFN.LLL, 'FAT' and 'ATTRIBFT.LLL' must be with insmod loaded before use  
 Script must unload 'FAT' and 'ATTRIBFT.LLL' if desired.  
 After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !  
+Use 'FATLFN.LLL help' for help (most of the time identical to command-line version)  
 
 ### HISTORY
 Version 0.2  
@@ -91,4 +92,7 @@ First published version
 
 ### SCREENSHOTS
 
-...  
+All Examples:  
+
+![FATLFN G4B all examples](https://github.com/user-attachments/assets/995832fa-c03b-4c70-a3d6-6135e47070a5)
+
