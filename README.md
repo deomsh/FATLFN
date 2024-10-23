@@ -74,7 +74,7 @@ First published version
 
 ## FATLFN.LLL v0.2 (20241023)
 
-This is the Loosely Linked Library version of the script.  
+This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'.  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz).  
 Returns 'result=1' if succes, variable 'message' if failure.  
 Exception for functions \<dir> and \<dirx> without "\> nul" at the end: normal operation.  
