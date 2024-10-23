@@ -69,8 +69,8 @@ FATLFN.G4B dellfn "(hd0,0)/Directory 2/Long File Name"
 FATLFN.G4B copy (hd0,0)/Directory\ 2/LONGFI~1 (hd0,0)/Directory/somefile</code></pre>
 
 ### ATTRIBFT.LLL
-Concept of 'Loosely Linked Library' is an idea of Wonko the Sane (Jaclaz)
-More information and download: https://github.com/deomsh/ATTRIBFT.LLL
+Concept of 'Loosely Linked Library' is an idea of Wonko the Sane (Jaclaz)  
+More information and download: https://github.com/deomsh/ATTRIBFT.LLL  
 
 ### HISTORY
 Version 0.2  
