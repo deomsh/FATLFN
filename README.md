@@ -92,7 +92,7 @@ First published version
 
 ### SCREENSHOTS
 
-All Examples from the 'help' of command-line script 'FATLFN.G4B':  
+Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':  
 
 ![FATLFN G4B all examples](https://github.com/user-attachments/assets/995832fa-c03b-4c70-a3d6-6135e47070a5)
 
