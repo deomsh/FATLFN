@@ -68,11 +68,15 @@ FATLFN.G4B del (hd0,0)/Directory\ 2/Longer\ File\ Name
 FATLFN.G4B dellfn "(hd0,0)/Directory 2/Long File Name"
 FATLFN.G4B copy (hd0,0)/Directory\ 2/LONGFI~1 (hd0,0)/Directory/somefile</code></pre>
 
+### ATTRIBFT.LLL
+Concept of 'Loosely Linked Library' is an idea of Wonko the Sane (Jaclaz)
+More information and download: https://github.com/deomsh/ATTRIBFT.LLL
+
 ### HISTORY
 Version 0.2  
 First published version
 
-## FATLFN.LLL v0.2 (20241023)
+### FATLFN.LLL v0.2 (20241023)
 
 This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'.  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz).  
@@ -86,7 +90,7 @@ Script must unload 'FAT' and 'ATTRIBFT.LLL' if desired.
 After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !  
 Use 'FATLFN.LLL help' for help (most of the time identical to command-line version)  
 
-### HISTORY
+#### HISTORY
 Version 0.2  
 First published version
 
