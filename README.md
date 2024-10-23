@@ -77,10 +77,10 @@ First published version
 This is the Loosely Linked Library version of the script.  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz).  
 Returns 'result=1' if succes, variable 'message' if failure.  
-Exception for functions <dir> and <dirx>: without "> nul" at the end normal operation.  
-With "> nul"  after FILE:  
-<dir> returns 'result=0' if directory is empty, otherwise count of Directory-entries  
-<dirx> returns 'result=0' if directory is empty, otherwise count of Long File Names in Directory  
+Exception for functions \<dir> and \<dirx>: without "\> nul" at the end normal operation.  
+With "\> nul"  after FILE:  
+\<dir> returns 'result=0' if directory is empty, otherwise count of Directory-entries  
+\<dirx> returns 'result=0' if directory is empty, otherwise count of Long File Names in Directory  
 If a script uses FATLFN.LLL, 'FAT' and 'ATTRIBFT.LLL' must be with insmod loaded before use  
 Script must unload 'FAT' and 'ATTRIBFT.LLL' if desired.  
 After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !  
