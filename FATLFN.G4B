@@ -1,5 +1,5 @@
 !BAT
-#-#+ FATLFN.G4B v0.2 (20241023), by deomsh
+#-#+ FATLFN.G4B v0.2 (20241101), by deomsh
 #-#+ Function: Loosely Linked Library to make Grubutil FAT compatible with Long File Names
 #-#+ Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
 #-#+ Use: FATLFN.G4B mkdir FILE
@@ -19,21 +19,22 @@
 #-#+ Remark: Needed Loosely Linked Library ATTRIBFT.LLL - must be in same folder as FATLFN.G4B, or already loaded with insmod (NO change of name allowed)
 #-#+ Remark <ren>: If Short File Name is renamed to Long File Name, Long File Name is added (if none exist). If Long File Name is renamed to associated Short File Name, Long File Name is removed, excpet if NOT PATH1=PATH2 (use <dirx> before to check). If 8+3 Short File Name, not fully highcase = LFN is renamed to same name in HIGHCASE, 8+3 LFN is removed - and the other way round if 8+3 LFN, not fully HIGHCASE, is added
 #-#+ Remark <copy>: with /o:r ALL found attributes on read-only target file will be restored after copying. With /a ALL attributes found on source file will be set on target-file after copying (FAT-source only!)
-#NOTANYMORE#-## Remark <makelfn>: Short File Name in FILE must exist, NO check if Short File Name is subset of added Long File Name!
+#NOT#-## Remark <makelfn>: Short File Name in FILE must exist, NO check if Short File Name is subset of added Long File Name!
 if "%~1"=="" && echo && call :help "smallhelp" &; echo && goto :eof
 if /i "%~1"=="help" && goto :help
 if "%~1"=="/?" && goto :help
 if not /i "%~1"=="mkdir" && if not /i "%~1"=="copy" && if not /i "%~1"=="ren" && if not /i "%~1"=="del" && if not /i "%~1"=="mkfile" && if not /i "%~1"=="dir" && if not /i "%~1"=="dirx" && if not /i "%~1"=="dellfn" && echo && call :help "smallhelp" &; echo && goto :eof
 debug 1
 debug msg=0
-delmod -l fat > nul || insmod %~0dpfat > nul || insmod /fat > nul || insmod (bd)/boot/grub/fat > nul || insmod (bd)/fat > nul || insmod (bd)/grub/fat > nul || insmod (bd)/g4dll/fat > nul || insmod %@root%/fat > nul || echo -e \x20Grubutil FAT needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
-delmod -l ATTRIBFT.LLL > nul || insmod %~0dpATTRIBFT.LLL > nul || insmod /ATTRIBFT.LLL > nul || insmod (bd)/boot/grub/ATTRIBFT.LLL > nul || insmod (bd)/ATTRIBFT.LLL > nul || insmod (bd)/grub/ATTRIBFT.LLL > nul || insmod (bd)/g4dll/ATTRIBFT.LLL > nul || insmod %@root%/ATTRIBFT.LLL > nul || echo -e \x20Loosely Linked Library ATTRIBFT.LLL needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
+delmod -l fat > nul || insmod %~dp0fat > nul || insmod /fat > nul || insmod (bd)/boot/grub/fat > nul || insmod (bd)/fat > nul || insmod (bd)/grub/fat > nul || insmod (bd)/g4dll/fat > nul || insmod %@root%/fat > nul || echo -e \x20Grubutil FAT needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
+delmod -l ATTRIBFT.LLL > nul || insmod %~dp0ATTRIBFT.LLL > nul || insmod /ATTRIBFT.LLL > nul || insmod (bd)/boot/grub/ATTRIBFT.LLL > nul || insmod (bd)/ATTRIBFT.LLL > nul || insmod (bd)/grub/ATTRIBFT.LLL > nul || insmod (bd)/g4dll/ATTRIBFT.LLL > nul || insmod %@root%/ATTRIBFT.LLL > nul || echo -e \x20Loosely Linked Library ATTRIBFT.LLL needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
 errorcheck off
 goto :%~1
 goto :eov
 ::
 :mkdir
 if not "%~3"=="" && echo Abort: too many arguments, argument "%~3" is not valid && set result=0 && goto :eov
+if "%~2"=="" && echo Abort: target is missing && set result=0 && goto :eov
 setlocal && set *
 set mode=dir
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~2" && set result=0 && goto :eov
@@ -45,7 +46,7 @@ set "name=%~n2" &; if not exist name && echo Abort: file name is missing && endl
 if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
 set "ext=%~x2" &; if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 if "%ext%"=="." && set ext=
-echo -e "%name%" | set name= &;  set "name=%name:~1,-1%"
+echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
 if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
 :mkdirnospacedotloop
 ## Starting spaces in name not allowed
@@ -57,9 +58,10 @@ if "%ext%"=="." && set ext=
 call :checkvalidname &; if %forbiden%==Y && endlocal && echo Abort: "%name%%%ext%" is not a valid filename && set result=0 && goto :eov
 if not exist sfnpath && call :checksfnpath "%path%" &; if not %SFNPATH%==N && set /u sfnpath=%path% ! set SFNPATH=
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-if not exist sfnpath && ATTRIBFT.LLL getsfnpath input="%output%" "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
+if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set result= && set "output1=%output%" && set output= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not exist sfnpath && ATTRIBFT.LLL getsfnpath "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
 call :checksfn "%name%%%ext%" &; if not %SFN%==N && set sfnfile=%name%%%ext%
-if not exist sfnfile && ATTRIBFT.LLL getsfn "%device%%%sfnpath%%%name%%%ext%" &; if exist result && echo Directory "%name%%%ext%" exists already && endlocal && set result=1 && goto :eov ! if exist message && set message=
+if not exist sfnfile && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && echo Directory "%name%%%ext%" exists already && endlocal && set result=1 && goto :eov ! if exist message && set message= && set output=
 ## Giving input="%output%" with function 'getsfnpath' = no result ???
 if exist sfnfile && if exist %device%%%sfnpath%%%sfnfile% && echo Abort: "%device%%%path%%%name%%%ext%" is an existing file && endlocal && set result=0 && goto :eov
 #NEEDED?#if exist sfnfile && if exist %device%%%sfnpath%%%sfnfile% > nul && echo Abort: "%device%%%path%%%name%%%ext%" is an existing file && endlocal && set result=0 && goto :eov
@@ -68,13 +70,14 @@ if not exist sfnfile && if %SFN%==N && call :makesfnfile "%device%%%sfnpath%%%na
 if exist sfnfile && fat mkdir %device%%%sfnpath%%%sfnfile% && set result=1
 if %CASE%==Y && set SFN=N
 ## Giving input="%output%" with function 'makelfn' = oke
-if %SFN%==N && if %result%==1 && set result= && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath%%%name%%%ext%" "%sfnfile%"
+if %SFN%==N && if %result%==1 && set result= && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" "%sfnfile%"
 if exist result && set result=1 ! set result=0
 endlocal && set result=%result%
 goto :eov
 ::
 :mkfile
 if not "%~5"=="" && echo Abort: too many arguments, argument "%~5" is not valid && set result=0 && goto :eov
+if "%~4"=="" && echo Abort: target is missing && set result=0 && goto :eov
 setlocal && set *
 set mode=file
 if /i "%~2"=="size" && set "size=%~3" ! endlocal && echo Abort: argument 'size=N' is missing && set result=0 && goto :eov
@@ -89,7 +92,7 @@ if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
 set "ext=%~x4" &; if "%ext%"=="." && set ext=
 if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 if "%ext%"=="." && set ext=
-echo -e "%name%" | set name= &;  set "name=%name:~1,-1%"
+echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
 if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
 :mkfilenospacedotloop
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :mkfilenospacedotloop
@@ -100,16 +103,16 @@ if "%ext%"=="." && set ext=
 call :checkvalidname &; if %forbiden%==Y && endlocal && echo Abort: "%name%%%ext%" is not a valid filename && set result=0 && goto :eov
 if not exist sfnpath && call :checksfnpath "%path%" &; if not %SFNPATH%==N && set /u sfnpath=%path% ! set SFNPATH=
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-if not exist sfnpath && ATTRIBFT.LLL getsfnpath input="%output%" "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
+if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not exist sfnpath && ATTRIBFT.LLL getsfnpath "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= && set "output1=%output%" && set output= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
 call :checksfn "%name%%%ext%" &; if not %SFN%==N && set sfnfile=%name%%%ext%
-if not exist sfnfile && ATTRIBFT.LLL getsfn "%device%%%sfnpath%%%name%%%ext%" &; if exist result && echo Abort: "%device%%%path%%%name%%%ext%" exist && endlocal && set result=0 && goto :eov ! if exist message && set message=
+if not exist sfnfile && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && echo Abort: "%device%%%path%%%name%%%ext%" exist && endlocal && set result=0 && goto :eov ! if exist message && set message= && set output=
 if exist sfnfile && if exist %device%%%sfnpath%%%sfnfile% && echo Abort: "%sfnfile%" is an existing file && endlocal && set result=0 && goto :eov
 if exist sfnfile && fat dir %device%%%sfnpath%%%sfnfile% > nul && echo Abort: "%sfnfile%" is an existing directory && endlocal && set result=0 && goto :eov
-if not exist sfnfile && if %SFN%==N && call :makesfnfile "%device%%%sfnpath%%%name%%%ext%" "%mode%" &; if not exist sfnfile && endlocal && echo Abort: can not make Short File Name && set result=0 && goto :eov
-errorcheck off
+if not exist sfnfile && if %SFN%==N && call :makesfnfile input="%output1%" "%device%%%sfnpath%%%name%%%ext%" "%mode%" &; if not exist sfnfile && endlocal && echo Abort: can not make Short File Name && set result=0 && goto :eov
 if exist sfnfile && fat mkfile size=%size% %device%%%sfnpath%%%sfnfile% && set result=1
 if %CASE%==Y && set SFN=N
-if %SFN%==N && if %result%==1 && set result= && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath%%%name%%%ext%" "%sfnfile%"
+if %SFN%==N && if %result%==1 && set result= && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" "%sfnfile%"
 if exist result && set result=1 ! set result=0
 endlocal && set result=%result%
 goto :eov
@@ -138,6 +141,8 @@ call Fn.11 "%~1" ":" && endlocal && set forbiden=Y && goto :eof
 call Fn.11 "%~1" "<" && endlocal && set forbiden=Y && goto :eof
 call Fn.11 "%~1" "?" && endlocal && set forbiden=Y && goto :eof
 #BADTOO#call Fn.11 "%~1" " " || call Fn.11 "%~1" "\x5C" && endlocal && set forbiden=Y && goto :eof
+## Removes'\'-sameas'\ '#echo -e $[0x07]%~1 | set arg=
+#TODO??#if /i %mode%==makelfn && set forbiden=Y && set /u "arg=%~1" &; call Fn.11 "%arg%" "CON" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || set forbiden=
 endlocal && set forbiden=%forbiden%
 goto :eof
 ::
@@ -158,6 +163,7 @@ goto :eof
 ::
 :ren
 if not "%~4"=="" && echo Abort: too many arguments, argument "%~4" is not valid && set result=0 && goto :eov
+if "%~3"=="" && echo Abort: target is missing && set result=0 && goto :eov
 setlocal && set *
 set "ARG3=%~3" &; if %ARG3:~0,1%==( && if not "%~d2"=="%~d3" && endlocal && echo Abort: target device is not equal to source device && set result=0 && goto :eov ! set ARG3=
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~2" && set result=0 && goto :eov
@@ -179,9 +185,9 @@ set "ext2=%~x3" &; if "%ext2%"=="." && set ext2=
 if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
 if "%ext2%"=="." && set ext2=
 echo -e "%name1%" | set name1= &; set "name1=%name1:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
-echo -e "%name2%" | set name2= &;  set "name2=%name2:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
+if exist ext1 && echo -e "%ext1%" | set ext1= &; set "ext1=%ext1:~1,-1%"
+echo -e "%name2%" | set name2= &; set "name2=%name2:~1,-1%"
+if exist ext2 && echo -e "%ext2%" | set ext2= &; set "ext2=%ext2:~1,-1%"
 :rennospacedotloop
 ## Starting spaces in name not allowed in Target
 if exist ext1 && call Fn.11 "%ext1:~-1,1%" " " && set "ext1=%ext1:~0,-1%" && goto :rennospacedotloop
@@ -197,7 +203,8 @@ call :checkvalidname "%name1%%%ext1%" &; if %forbiden%==Y && endlocal && echo Ab
 call :checkvalidname "%name2%%%ext2%" &; if %forbiden%==Y && endlocal && echo Abort: "%name2%%%ext2%" is not a valid filename && set result=0 && goto :eov
 if not exist sfnpath1 && call :checksfnpath "%path1%" &; if not %SFNPATH%==N && set /u sfnpath1=%path1% ! set SFNPATH=
 if not exist sfnpath1 && echo -e "%path1%" | set path1= &; set "path1=%path1:~1,-1%"
-if not exist sfnpath1 && ATTRIBFT.LLL getsfnpath input="%output%" "%device%%%path1%" &; if exist result && set sfnpath1=%result% && set result= ! endlocal && echo SFNpath1 not found for "%path1%" && set result=0 && goto :eov
+if "%sfnpath1%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not exist sfnpath1 && ATTRIBFT.LLL getsfnpath "%device%%%path1%" &; if exist result && set sfnpath1=%result% && set result= && set "output1=%output%" && set output= ! endlocal && echo SFNpath1 not found for "%path1%" && set result=0 && goto :eov
 if not exist sfnpath2 && call :checksfnpath "%path2%" &; if not %SFNPATH%==N && set /u sfnpath2=%path2% ! set SFNPATH=
 if not exist sfnpath2 && echo -e "%path2%" | set path2= &; set "path2=%path2:~1,-1%"
 call :checksfn "%name1%%%ext1%" &; if not %SFN%==N && set /u sfnfile1=%name1%%%ext1% && set CASE= ! set SFN1=N && set LFN1=Y && set SFN= && set CASE= && set "lfnfile1=%name1%%%ext1%"
@@ -205,13 +212,13 @@ call :checksfn "%name2%%%ext2%" &; if not %SFN%==N && set /u sfnfile2=%name2%%%e
 ## Call :move if not PATH1=PATH2
 if not /i "%path1%"=="%path2%" && call :move &; if exist result && set result=1 ! set result=0 &; endlocal && set result=%result% && goto :eov
 ## Try if sfnfile1 is SFN of LFN of name1ext1
-if not exist sfnfile1 && ATTRIBFT.LLL getsfn input="%output%" "%device%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u sfnfile1=%result% && set result= && set LFN1=Y ! endlocal && echo Abort: Long File Name "%name1%%%ext1%" not exist on source && set result=0 && goto :eov
+if not exist sfnfile1 && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u sfnfile1=%result% && set result= && set LFN1=Y && set output= ! endlocal && echo Abort: Long File Name "%name1%%%ext1%" not exist on source && set result=0 && goto :eov
 ## FIRST: check existence of source folder/ file and set 'mode' to file or dir
 if exist %device%%%sfnpath1%%%sfnfile1% && set file1=1 && set mode=file
 if not exist file1 && fat dir %device%%%sfnpath1%%%sfnfile1% > nul && set dir1=1 && set mode=dir
 if not exist file1 && if not exist dir1 && echo Abort: "%name1%%%ext1%" not exist on source && endlocal && set result=0 && goto :eov
 ## Try if sfnfile1 has a LFN and check if name2ext2 is not equal
-setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set result= && if not %CASE1%==Y && set LFN1=Y
+setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set result= && if not %CASE1%==Y && set LFN1=Y
 if exist lfnfile1 && if "%lfnfile1%"=="%name2%%%ext2%" && endlocal && echo Abort: can not rename Long File Name "%lfnfile1%" to "%name2%%%ext2%" && set result=0 && goto :eov
 ## Check if not SFN1=SFN2 on command-line
 if exist lfnfile1 && if %sfnfile1%==%sfnfile2% && if "%sfnfile1%"=="%name1%%%ext1%" && if "%sfnfile2%"=="%name2%%%ext2%" && endlocal && echo Abort: can not rename Short File Name to itself && set result=0 && goto :eov
@@ -219,37 +226,37 @@ if exist lfnfile1 && if %sfnfile1%==%sfnfile2% && if "%sfnfile1%"=="%name1%%%ext
 if exist lfnfile1 && if not "%sfnfile1%"=="%name1%%%ext1%" && if exist sfnfile2 && if not %LFN2%==Y && if not %sfnfile1%==%sfnfile2% && if exist %device%%%sfnpath1%%%sfnfile2% && echo Abort: file "%name2%%%ext2%" exists already && endlocal && set result=0 && goto :eov
 if exist lfnfile1 && if not "%sfnfile1%"=="%name1%%%ext1%" && if exist sfnfile2 && if not %LFN2%==Y && if not %sfnfile1%==%sfnfile2% && fat dir %device%%%sfnpath1%%%sfnfile2% > nul && echo Abort: directory "%name2%%%ext2%" exists already && endlocal && set result=0 && goto :eov
 ## Delete lfnfile1 to make case-LFN2
-if exist lfnfile1 && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%name1%%%ext1%" on source && set result=0 && goto :eov ! if %sfnfile1%==%sfnfile2% && set result= ! set result= && set DELLFN1=Y
-## x-times Make case-LFN2 if sfnfile1=sfnfile2 regardless of LFN-status of source and exit
-if /i "%lfnfile1%"=="%sfnfile1%" && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
-if not %LFN1%==Y && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
-if %LFN1%==Y && if %sfnfile1%==%sfnfile2% && if not %LFN2%==Y && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
+if exist lfnfile1 && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%name1%%%ext1%" on source && set result=0 && goto :eov ! if %sfnfile1%==%sfnfile2% && set result= && set output= ! set result= && set DELLFN1=Y && set output=
+## 3 times (???) Make case-LFN2 if sfnfile1=sfnfile2 regardless of LFN-status of source and exit
+if /i "%lfnfile1%"=="%sfnfile1%" && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
+if not %LFN1%==Y && if %sfnfile1%==%sfnfile2% && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
+if %LFN1%==Y && if %sfnfile1%==%sfnfile2% && if not %LFN2%==Y && if %CASE2%==Y && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
 ## Always delete lfnfile1 unless sfnfile1==name1ext1
-if exist lfnfile1 && if not "%sfnfile1%"=="%name1%%%ext1%" && ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%name1%%%ext1%" on source && set result=0 && goto :eov ! if %sfnfile1%==%sfnfile2% && if not %CASE2%==Y && endlocal && set result=1 && goto :eov ! set result= && set DELLFN1=Y
+if exist lfnfile1 && if not "%sfnfile1%"=="%name1%%%ext1%" && ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%name1%%%ext1%" on source && set result=0 && goto :eov ! if %sfnfile1%==%sfnfile2% && if not %CASE2%==Y && endlocal && set result=1 && goto :eov ! set result= && set DELLFN1=Y && set output=
 ## Change case in further identical LFN's and exit
-if %LFN1%==Y && if %LFN2%==Y && if /i "%name1%%%ext1%"=="%name2%%%ext2%" && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
+if %LFN1%==Y && if %LFN2%==Y && if /i "%name1%%%ext1%"=="%name2%%%ext2%" && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
 ## Check existence file/ dir if no LFN2 is on command-line
 if exist sfnfile2 && if not %LFN2%==Y && if exist %device%%%sfnpath1%%%sfnfile2% && echo Abort: file "%name2%%%ext2%" exists already && endlocal && set result=0 && goto :eov
 if exist sfnfile2 && if not %LFN2%==Y && fat dir %device%%%sfnpath1%%%sfnfile2% > nul && echo Abort: directory "%name2%%%ext2%" exists already && endlocal && set result=0 && goto :eov
 ## Check if LFN2 is on command-line exists already
-if %LFN2%==Y && if not /i "%name1%%%ext1%"=="%name2%%%ext2%" && ATTRIBFT.LLL getsfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" &; if exist result && endlocal && echo Abort: Long File Name "%name2%%%ext2%" exists already on target && set result=0 && goto :eov ! set message=
+if %LFN2%==Y && if not /i "%name1%%%ext1%"=="%name2%%%ext2%" && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" &; if exist result && endlocal && echo Abort: Long File Name "%name2%%%ext2%" exists already on target && set result=0 && goto :eov ! set message=
 ## makesfn for full LFN2 if sfnfile1 is on command-line but LFN1 exists (rename LFN1 to LFN2 other than case difference)
 if exist sfnfile2 && if %LFN1%==Y && if "%sfnfile1%"=="%name1%%%ext1%" && if not "%sfnfile1%"=="%name2%%%ext2%" && if not %CASE2%==Y && call :makesfnfile "%lfnfile1%" "name" "%sfnfile2%" &; if not exist sfnfile && endlocal && echo Abort: %sfnfile2% is not valid with Long File Name "%lfnfile1%" of %sfnfile1% && set result=0 && goto :eov
 ## Delete LFN1 to make new full LFN2
-if exist sfnfile2 && if %LFN2%==Y && if not "%sfnfile1%"=="%name2%%%ext2%" && if not %CASE2%==Y && ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%lfnfile1%" on source && set result=0 && goto :eov ! if exist message && set message=
+if exist sfnfile2 && if %LFN2%==Y && if not "%sfnfile1%"=="%name2%%%ext2%" && if not %CASE2%==Y && ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%lfnfile1%" on source && set result=0 && goto :eov ! if exist message && set message= && set output=
 ## Make full LFN2 if sfnfile1=sfnfile2 and exit
-if %LFN1%==Y && if %LFN2%==Y && if %sfnfile1%==%sfnfile2% && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
+if %LFN1%==Y && if %LFN2%==Y && if %sfnfile1%==%sfnfile2% && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile1%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%name2%%%ext2%" on target for "%sfnfile1%" not created && set result=0 && goto :eov
 ## Delete lfnfile1 'if /i sfnfile1=sfnfile2' AND if not earlier gone wrong [if not DELLFN1=Y]
-if exist lfnfile1 && if not %DELLFN1%==Y && if /i %sfnfile1%==%sfnfile2% && ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%lfnfile1%" on source && set result=0 && goto :eov
+if exist lfnfile1 && if not %DELLFN1%==Y && if /i %sfnfile1%==%sfnfile2% && ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete Long File Name "%lfnfile1%" on source && set result=0 && goto :eov ! set output=
 ## makesfn for full LFN2 'if not /i %sfnfile1=sfnfile2' (get SFN-target for 'fat ren')
 if %LFN2%==Y && if not /i %sfnfile1%==%sfnfile2% && set sfnfile= && call :makesfnfile "%device%%%sfnpath1%%%name2%%%ext2%" "%mode%" "%sfnfile2%" &; if exist sfnfile && set /u sfnfile2=%sfnfile% ! endlocal && echo Abort: BAD conversion of Long File Name on target to Short File Name on source && set result=0 && goto :eov
 ## 'fat ren' => all LFN's must be deleted first because new SFN-entry is created with 'fat ren'
 if exist sfnfile2 && if not /i %sfnfile2%==%sfnfile1% &; fat ren %device%%%sfnpath1%%%sfnfile1% %sfnpath1%%%sfnfile2% && set success=Y ! endlocal && set result=0 && goto :eov
-if exist sfnfile2 && if not /i %sfnfile2%==%sfnfile1% && if %success%==Y && set result=1 && if %LFN2%==Y && if not "%name2%%%ext2%"=="%sfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && endlocal && echo Failed to make Long File Name "%lfnfile2%" on target for "%sfnfile2%" && set result=0 && goto :eov
-if %LFN1%==Y && if not %SFN1%==N && if not %LFN2%==Y && if not %SFN2%==N && if not /i %sfnfile1%==%sfnfile2% && if exist lfnfile1 && ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" "%sfnfile2%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%lfnfile1%" for "%sfnfile1%" not created on target && set result=0 && goto :eov
-if exist sfnfile2 && if not /i %sfnfile2%==%sfnfile1% && if %success%==Y && set result=1 && if not %LFN2%==Y && if %CASE2%==Y && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && endlocal && echo Failed to make Long File Name "%lfnfile1%" on target for "%sfnfile2%" && set result=0 && goto :eov
+if exist sfnfile2 && if not /i %sfnfile2%==%sfnfile1% && if %success%==Y && set result=1 && if %LFN2%==Y && if not "%name2%%%ext2%"=="%sfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && endlocal && echo Failed to make Long File Name "%lfnfile2%" on target for "%sfnfile2%" && set result=0 && goto :eov ! set output=
+if %LFN1%==Y && if not %SFN1%==N && if not %LFN2%==Y && if not %SFN2%==N && if not /i %sfnfile1%==%sfnfile2% && if exist lfnfile1 && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" "%sfnfile2%" &; if exist result && endlocal && set result=1 && goto :eov ! endlocal && echo Abort: Long File Name "%lfnfile1%" for "%sfnfile1%" not created on target && set result=0 && goto :eov
+if exist sfnfile2 && if not /i %sfnfile2%==%sfnfile1% && if %success%==Y && set result=1 && if not %LFN2%==Y && if %CASE2%==Y && set result= &; ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && endlocal && echo Failed to make Long File Name "%lfnfile1%" on target for "%sfnfile2%" && set result=0 && goto :eov ! set output=
 if %CASE2%==Y && set LFN2=Y
-if exist sfnfile2 && if /i %sfnfile2%==%sfnfile1% && set result=0 && if %LFN2%==Y && if not "%name2%%%ext2%"=="%sfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && echo Failed to make Long File Name "%lfnfile2%" on target for "%sfnfile2%"
+if exist sfnfile2 && if /i %sfnfile2%==%sfnfile1% && set result=0 && if %LFN2%==Y && if not "%name2%%%ext2%"=="%sfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath1%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && echo Failed to make Long File Name "%lfnfile2%" on target for "%sfnfile2%" ! set output=
 if exist result && set result=1 ! set result=0
 endlocal && set result=%result%
 goto :eov
@@ -257,18 +264,18 @@ goto :eov
 :move
 setlocal
 ## Get sfnfile1 if name1ext1 is LFN
-if not exist sfnfile1 && ATTRIBFT.LLL getsfn input="%output%" "%device%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u sfnfile1=%result% && set result= && set LFN1=Y ! endlocal && echo Abort: Long File Name "%name1%%%ext1%" not exist on source && set result= && goto :eof
+if not exist sfnfile1 && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u sfnfile1=%result% && set result= && set LFN1=Y && set output= ! endlocal && echo Abort: Long File Name "%name1%%%ext1%" not exist on source && set result= && goto :eof
 ## FIRST: check existence of source folder/ file and set 'mode' to file or dir
 if exist %device%%%sfnpath1%%%sfnfile1% && set file1=1 && set mode=file
 if not exist file1 && fat dir %device%%%sfnpath1%%%sfnfile1% > nul && set dir1=1 && set mode=dir
 if exist dir1 && set "check1=%sfnpath1%%%sfnfile1%" &; set /a checklen=%@retval% &; call if /i "%check1%"=="%^sfnpath2:~0,%checklen%%%" && echo Abort: can not rename part of target-path && endlocal && set result=0 && goto :eof
 if not exist file1 && if not exist dir1 && echo Abort: "%name1%%%ext1%" not exist on source && endlocal && set result=0 && goto :eof
 ## Try if sfnfile1 has a LFN
-setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set result=
+setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set result=
 ## Get sfnpath2 if exists
-ATTRIBFT.LLL getsfnpath input="%output%" "%device%%%path2%" &; if exist result && set sfnpath2=%result% && set result= ! endlocal && echo Abort: SFNPATH2 of "%path2%" not found && set result=0 && goto :eof
+if not exist sfnpath2 && ATTRIBFT.LLL getsfnpath input="%output1%" "%device%%%path2%" &; if exist result && set sfnpath2=%result% && set result= && set output= ! endlocal && echo Abort: SFNPATH2 of "%path2%" not found && set result=0 && goto :eof
 ## Check if sfnfile2 exists
-if not exist sfnfile2 && if exist lfnfile2 && ATTRIBFT.LLL getsfn input="%output%" "%device%%%sfnpath2%%%lfnfile2%" &; if exist result && endlocal && echo Abort; LFN2 "%lfnfile2%" exists already in "%path2%" && set result=0 && goto :eof ! set message=
+if not exist sfnfile2 && if exist lfnfile2 && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath2%%%lfnfile2%" &; if exist result && endlocal && echo Abort; LFN2 "%lfnfile2%" exists already in "%path2%" && set result=0 && goto :eof ! set message= && set output=
 ## makesfn for full LFN2 if LFN1 not exist and sfnfile2 not exist
 if not %LFN1%==Y && if %LFN2%==Y && if not exist sfnfile2 && call :makesfnfile "%name2%%%ext2%" "name" "%sfnfile1%" &; if %sfnfile1%==%sfnfile% && set "sfnfile2=%sfnfile%" ! set sfnfile2= && set sfnfile=
 ## Check existence sfnfile2 as file/ dir on target
@@ -279,18 +286,19 @@ if /i %lfnfile1%==%sfnfile1% &; if not exist file2 if not exist dir2 |; endlocal
 if exist lfnfile1 && set LFN1=Y
 ## Do 'fat ren' if not LFN involved and exit
 if not %CASE2%==Y && if not %LFN1%==Y && if not %LFN2%==Y && if not exist file2 && if not exist dir2 &; fat ren %device%%%sfnpath1%%%sfnfile1% %sfnpath2%%%sfnfile2% && endlocal && set result=1 && goto :eof ! endlocal && echo Abort: can not move "%device%%%sfnpath1%%%sfnfile1%" to "%sfnpath2%%%sfnfile2%" && set result=0 && goto :eof
+#BAD#if not %CASE2%==Y && if not %LFN1%==Y && if not %LFN2%==Y && if not exist file2 && if not exist dir2 &; fat ren %device%%%sfnpath1%%%sfnfile1% %sfnpath2%%%sfnfile2% && endlocal && set result=1 && goto :eof ! endlocal && echo Abort: can not move "%device%%%sfnpath1%%%sfnfile1%" to "%sfnpath2%%%sfnfile2%" && set result=0 && goto :eof
 ## makesfn for full LFN2
 if %LFN2%==Y &; if not exist file2 if not exist dir2 if exist sfnfile |; set sfnfile2= && set sfnfile= && call :makesfnfile "%device%%%sfnpath2%%%lfnfile2%" "%mode%" &; if exist sfnfile && set sfnfile2=%sfnfile% && set sfnfile= ! endlocal && echo Abort: can not get SFN2 for "%lfnfile2%" && set result=0 && goto :eof
 if not exist sfnfile2 && set sfnfile2=%sfnfile1%
 if %CASE2%==Y && set "lfnfile2=%name2%%%ext2%"
 ## Delete lfnfile1 before moving => NOT later, if no delting possible, no moving [c.q. read-only device]
-if exist lfnfile1 && ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete LFN1 "%lfnfile1%" && set result=0 && goto :eof
+if exist lfnfile1 && ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath1%%%lfnfile1%" &; if not exist result && endlocal && echo Abort: can not delete LFN1 "%lfnfile1%" && set result=0 && goto :eof ! set output=
 ## 'fat ren' to move SFN1
 set result= &; fat ren %device%%%sfnpath1%%%sfnfile1% %sfnpath2%%%sfnfile2% && set success=Y ! endlocal && echo Abort: can not move "%device%%%sfnpath1%%%sfnfile1%" to "%sfnpath2%%%sfnfile2%" && set result=0 && goto :eof
 ## Make lfnfile2 on target SFN-file2 if exist lfnfile2
-if %success%==Y && if exist lfnfile2 &; ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath2%%%lfnfile2%" "%sfnfile2%" &; if not exist result && endlocal && echo Abort: can not make LFN2 "%lfnfile2%" for "%sfnfile2%" && set result=0 && goto :eof
+if %success%==Y && if exist lfnfile2 &; ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath2%%%lfnfile2%" "%sfnfile2%" &; if not exist result && endlocal && echo Abort: can not make LFN2 "%lfnfile2%" for "%sfnfile2%" && set result=0 && goto :eof ! set output=
 ## Make lfnfile2 on target SFN-file2 if NOT exist lfnfile2, BUT lfnfile1 exists AND sfnfile1=sfnfile2 [move including LFN]
-if %success%==Y && if not exist lfnfile2 && if exist lfnfile1 && if %sfnfile1%==%sfnfile2% &; ATTRIBFT.LLL makelfn input="%output%" "%device%%%sfnpath2%%%lfnfile1%" "%sfnfile2%" &; if not exist result && endlocal && echo Abort: can not make LFN2 "%lfnfile1%" for "%sfnfile2%" && set result=0 && goto :eof
+if %success%==Y && if not exist lfnfile2 && if exist lfnfile1 && if %sfnfile1%==%sfnfile2% &; ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath2%%%lfnfile1%" "%sfnfile2%" &; if not exist result && endlocal && echo Abort: can not make LFN2 "%lfnfile1%" for "%sfnfile2%" && set result=0 && goto :eof ! set output=
 if exist result && set result=1 ! set result=0
 endlocal && set result=%result%
 goto :eof
@@ -298,7 +306,8 @@ goto :eof
 :del
 setlocal && set *
 if /i "%~2"=="/r" && if not "%~3"=="" && set del=r && shift
-if not "%~3"=="" && echo Abort: too many arguments, argument "%~3" is not valid && set result=0 && goto :eov
+if not "%~3"=="" && endlocal && echo Abort: too many arguments, argument "%~3" is not valid && set result=0 && goto :eov
+if "%~2"=="" && endlocal && echo Abort: target is missing && set result=0 && goto :eov
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~2" && set result=0 && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && echo Abort: target "%device%" is not a fat device && set result=0 && goto :eov
 if %device%==(md) && endlocal && echo Abort: device "%device%" is not valid && set result=0 && goto :eov
@@ -320,15 +329,16 @@ if "%ext%"=="." && set ext=
 call :checkvalidname "%name1%%%ext1%" &; if %forbiden%==Y && endlocal && echo Abort: "%name%%%ext%" is not a valid filename && set result=0 && goto :eov
 if not exist sfnpath && call :checksfnpath "%path%" &; if not %SFNPATH%==N && set /u sfnpath=%path% ! set SFNPATH=
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-if not exist sfnpath && ATTRIBFT.LLL getsfnpath input="%output%" "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
+if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not exist sfnpath && ATTRIBFT.LLL getsfnpath "%device%%%path%" &; if exist result && set sfnpath=%result% && set result= && set "output1=%output%" && set output= ! endlocal && echo Abort: no Short File Name(s) path found && set result=0 && goto :eov
 call :checksfn "%name%%%ext%" &; if not %SFN%==N && set sfnfile=%name%%%ext%
-if not exist sfnfile && ATTRIBFT.LLL getsfn "%device%%%sfnpath%%%name%%%ext%" &; if exist result && set /u sfnfile=%result% && set result= ! echo Abort: "%name%%%ext%" not found && endlocal && set result=0 && goto :eov
-if exist sfnfile && if not %SFN%==N &; setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath%%%sfnfile%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile=%result%" && set result= && set CASE=Y
+if not exist sfnfile && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && set /u sfnfile=%result% && set result= && set output= ! echo Abort: "%name%%%ext%" not found && endlocal && set result=0 && goto :eov
+if exist sfnfile && if not %SFN%==N &; setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%%%sfnfile%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile=%result%" && set result= && set CASE=Y
 fat dir %device%%%sfnpath%%%sfnfile% > nul && ls %device%%%sfnpath%%%sfnfile%/ > nul && endlocal && echo -e Abort: directory "%device%%%path%%%name%%%ext%" is not empty && set result=0 && goto :eov
-if %del%==r && ATTRIBFT.LLL isreadonly input="%output%" "%device%%%sfnpath%%%sfnfile%" &; if %result%==1 && set result= &; ATTRIBFT.LLL setattrib "%device%%%sfnpath%%%sfnfile%" "-r" &; if %result%==1 && set result= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
+if %del%==r && ATTRIBFT.LLL isreadonly input="%output1%" "%device%%%sfnpath%%%sfnfile%" &; if %result%==1 && set result= && set output= &; ATTRIBFT.LLL setattrib input="%output1%" "%device%%%sfnpath%%%sfnfile%" "-r" &; if %result%==1 && set result= && set output= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
 fat del %device%%%sfnpath%%%sfnfile% && set success=Y
-if %success%==Y && set result=1 && if %SFN%==N && set result= &; ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath%%%name%%%ext%"
-if %success%==Y && if exist lfnfile && if %CASE%==Y && set result= &; ATTRIBFT.LLL dellfn input="%output%" "%device%%%sfnpath%%%lfnfile%"
+if %success%==Y && set result=1 && if %SFN%==N && if not exist lfnfile && set result= &; ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && set DELLFN=N && set result=1 && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set message= && set result=1 && set DELLFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+if %success%==Y && if not %DELLFN%==N && if exist lfnfile && if %CASE%==Y && set result= &; ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath%%%lfnfile%" &; if exist result && set result=1 ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set message= && set result=1 && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
 if not exist result && set result=0 ! set result=1
 endlocal && set result=%result%
 goto :eov
@@ -339,6 +349,7 @@ set "ARG2=%~2" &; if /i "%ARG2:~0,2%"=="/o" && if not "%~3"=="" && if not "%~4"=
 set "ARG2=%~2" &; if /i "%ARG2%"=="/a" && if not "%~3"=="" && if not "%~4"=="" && set a=/a && shift
 set "ARG2=%~2" &; if /i "%ARG2:~0,2%"=="/o" && if not "%~3"=="" && if not "%~4"=="" && set o=/o && shift && if "%ARG2:~2,2%"==":r" && set del=/r
 if not "%~4"=="" && echo Abort: too many arguments, argument "%~4" is not valid && endlocal && set result=0 && goto :eov
+if "%~3"=="" && echo Abort: target is missing && endlocal && set result=0 && goto :eov
 set ARG2=
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~2" && set result=0 && goto :eov
 call :checkforbiddenchars "%~3" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~3" && set result=0 && goto :eov
@@ -356,122 +367,182 @@ if %device2%==(md) && endlocal && echo Abort: device "%device%" is not valid && 
 set "path2=%~p3" &; if "%path2%"=="/" && set "sfnpath2=/"
 if not exist sfnpath2 && call Fn.11 "%path2%" "/ " && echo Abort: no starting spaces allowed in directories in target "%path2%" && endlocal && set result=0 && goto :eov
 set "name2=%~n3"
-if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
+if exist name2 &; if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
 set "ext2=%~x3" &; if "%ext2%"=="." && set ext2=
-if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
-if "%ext2%"=="." && set ext2=
+if exist ext2 &; if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
+if exist ext2 &; if "%ext2%"=="." && set ext2=
 if not exist sfnpath1 && echo -e "%path1%" | set path1= &; set "path1=%path1:~1,-1%"
-echo -e "%name1%" | set name1= &;  set "name1=%name1:~1,-1%"
+echo -e "%name1%" | set name1= &; set "name1=%name1:~1,-1%"
 if exist ext1 && echo -e "%ext1%" | set ext1= &; set "ext1=%ext1:~1,-1%"
 if not exist sfnpath2 && echo -e "%path2%" | set path2= &; set "path2=%path2:~1,-1%"
-echo -e "%name2%" | set name2= &;  set "name2=%name2:~1,-1%"
+if exist name2 &; echo -e "%name2%" | set name2= &; set "name2=%name2:~1,-1%"
 if exist ext2 && echo -e "%ext2%" | set ext2= &; set "ext2=%ext2:~1,-1%"
 if /i "%~f2"=="%~f3" && echo -n Abort: can not copy file to itself &; if not "%name1%%%ext1%"=="%name2%%%ext2%" && echo , to change filename use function <ren> ! echo &; endlocal && set result=0 && goto :eov
 :copynospacedotloop
 if exist ext1 && call Fn.11 "%ext1:~-1,1%" " " && set "ext1=%ext1:~0,-1%" && goto :copynospacedotloop
 if not exist ext1 && call Fn.11 "%name1:~-1,1%" " " && set "name1=%name1:~0,-1%" && goto :copynospacedotloop
 if not exist ext1 && call Fn.11 "%name1:~-1,1%" "." && set "name1=%name1:~0,-1%" && goto :copynospacedotloop
-if "%ext1%"=="." && set ext1=
+if exist ext1 &; if "%ext1%"=="." && set ext1=
 if exist ext2 && call Fn.11 "%ext2:~-1,1%" " " && set "ext2=%ext2:~0,-1%" && goto :copynospacedotloop
-if not exist ext2 && call Fn.11 "%name2:~-1,1%" " " && set "name2=%name2:~0,-1%" && goto :copynospacedotloop
-if not exist ext2 && call Fn.11 "%name2:~-1,1%" "." && set "name2=%name2:~0,-1%" && goto :copynospacedotloop
-if "%ext2%"=="." && set ext2=
+if exist name2 &; if not exist ext2 && call Fn.11 "%name2:~-1,1%" " " && set "name2=%name2:~0,-1%" && goto :copynospacedotloop
+if exist name2 &; if not exist ext2 && call Fn.11 "%name2:~-1,1%" "." && set "name2=%name2:~0,-1%" && goto :copynospacedotloop
+if exist ext2 &; if "%ext2%"=="." && set ext2=
 call :checkvalidname "%name1%%%ext1%" &; if %forbiden%==Y && endlocal && echo Abort: "%name1%%%ext1%" is not a valid filename && set result=0 && goto :eov
-call :checkvalidname "%name2%%%ext2%" &; if %forbiden%==Y && endlocal && echo Abort: "%name2%%%ext2%" is not a valid filename && set result=0 && goto :eov
+if exist name2 &; call :checkvalidname "%name2%%%ext2%" &; if %forbiden%==Y && endlocal && echo Abort: "%name2%%%ext2%" is not a valid filename && set result=0 && goto :eov
 if not exist %device1%/"%path1:~1%%%name1%%%ext1%" && echo Abort: "%device1%%%path1%%%name1%%%ext1%" does not exist && endlocal && set result=0 && goto :eov
 if not exist o && if not exist name2 && call Fn.11 "%name1:~2%" "~" || if exist %device2%/"%path2:~1%%%name1%%%ext1%" && echo Abort: "%device2%%%path2%%%name1%%%ext1%" exists already && endlocal && set result=0 && goto :eov
 if not exist o && if exist name2 && call Fn.11 "%name2:~2%" "~" || if exist %device2%/"%path2:~1%%%name2%%%ext2%" && echo Abort: "%device2%%%path2%%%name2%%%ext2%" exists already && endlocal && set result=0 && goto :eov
-call :getcase "%device1%%%path1%%%name1%%%ext1%" &; if exist name && set "name1=%name%" && set "ext1=%ext%" && set name= && set ext= ! if %result%==0 && set /u sfnfile1=%name1%%%ext1% && set result=
+## Check if path1 is SFN
 if not exist sfnpath1 &; call :checksfnpath "%path1%" &; if not %SFNPATH%==N && set sfnpath1=%path1% && set SFNPATH= ! set SFNPATH1=N && set SFNPATH=
-if /i %filesysS:~0,3%==fat && if not exist sfnpath1 &; ATTRIBFT.LLL getsfnpath input="%output%" "%device1%%%path1%" &; if exist result && set /u sfnpath1=%result% && set result= ! endlocal && set result=0 && goto :eov
-if not exist sfnfile1 && call :checksfn "%name1%%%ext1%" &; if %SFN%==N && set "lfnfile=%name1%%%ext1%" && set SFN1=N && set SFN= && set CASE= ! if %CASE%==Y && set /u sfnfile1=%name1%%%ext1% && set SFN= && set CASE1=Y && set CASE= ! set /u sfnfile1=%name1%%%ext1% && set SFN=
-if /i %filesysS:~0,3%==fat && if not exist sfnfile1 && ATTRIBFT.LLL getsfn "%device1%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u "sfnfile1=%result%" && set SFN1=N && set result= ! if exist message && set message=
-if /i %filesysS:~0,3%==fat && if not %CASE1%==Y && if not exist name2 && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile=%result%" && set result= && set SFN1=N
-errorcheck off
+## Get sfnpath1 on fat-source if not '/'
+if /i %filesysS:~0,3%==fat && if "%sfnpath1%"=="/" && ATTRIBFT.LLL getsfnpath "%device1%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if /i %filesysS:~0,3%==fat && if not exist sfnpath1 &; ATTRIBFT.LLL getsfnpath "%device1%%%path1%" &; if exist result && set /u sfnpath1=%result% && set result= && set "output1=%output%" && set output= ! endlocal && set result=0 && goto :eov
+## Check if source file-name on command-line is SFN
+if not exist sfnfile1 && call :checksfn "%name1%%%ext1%" &; if %SFN%==N && set SFN1=N && set SFN= && set CASE= ! if %CASE%==Y && set /u sfnfile1=%name1%%%ext1% && set SFN= && set CASE1=Y && set CASE= ! set /u sfnfile1=%name1%%%ext1% && set SFN= && set CASE=
+## Check if case is set by ntcasebyte
+if %CASE1%==Y && if not %SFN1%==N && if /i %filesysS:~0,3%==fat && ATTRIBFT.LLL getntcasebyte input="%output1%" "%device1%%%path1%%%name1%%%ext1%" &; if exist result && if not %result%==0 && set CASE1= && set result= && set output= ! set result= && set message= && set output=
+## Check case with ls
+if %CASE1%==Y && if not %SFN1%==N && call :getcase "%device1%%%path1%%%name1%%%ext1%" &; if exist name && set "name1=%name%" && set "ext1=%ext%" && set name= && set ext= ! if %result%==0 && set /u sfnfile1=%name1%%%ext1% && set result=
+if not /i %filesysS:~0,3%==fat && if %SFN1%==N && call :getcase "%device1%%%path1%%%name1%%%ext1%" &; if exist name && set "name1=%name%" && set "ext1=%ext%" && set name= && set ext= ! set result=
+## Find sfnfile1 from file-name on fat-source, if not exists already
+if /i %filesysS:~0,3%==fat && if not exist sfnfile1 && ATTRIBFT.LLL getsfn input="%output1%" "%device1%%%sfnpath1%%%name1%%%ext1%" &; if exist result && set /u "sfnfile1=%result%" && set SFN1=N && set result= && set output= ! if exist message && set message= && set output=
+## Find lfnfile1 from file-name on fat-source if no target-name exists; if found set lfnfile && set LFN1=Y but NOT SFN1=N if not already SFN=N
+if /i %filesysS:~0,3%==fat && if not %CASE1%==Y && if not exist name2 && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set LFN1=Y && set result=
+## Check if sfnfile1 is a directory on a fat-source
 if /i %filesysS:~0,3%==fat &; fat dir %device1%%%sfnpath1%%%sfnfile1% > nul && endlocal && echo -e Abort: "%device1%%%path1%%%name1%%%ext1%" is a directory && set result=0 && goto :eov
-if not /i %filesysS%==fat && if exist %device1%/"%path1:~1%%%name1%%%ext1%" && set file1=1
+## Check existence of file-name on source and set file1=1
+if exist %device1%/"%path1:~1%%%name1%%%ext1%" && set file1=1
+## Check if file-name is a non-empty directory on a NON-fat-source
 if not /i %filesysS:~0,3%==fat && if not %file1%==1 &; ls %device1%/"%path1:~1%%%name1%%%ext1%"/ > nul && endlocal && echo -e Abort: "%device1%%%path1%%%name1%%%ext1%" is a directory && set result=0 && goto :eov
+## Check if file-name is an empty directory on a NON-fat-source, or possibly a zerobyte file if source is NTFS
 if not /i %filesysS:~0,3%==fat && if not %file1%==1 &; ls %device1%/"%path1:~1%%%name1%%%ext1%"/ > nul || endlocal && echo -e Abort: "%device1%%%path1%%%name1%%%ext1%" is an empty directory or a zero-byte file && set result=0 && goto :eov
-if /i %filesysS:~0,3%==fat && if exist %device1%/"%path1:~1%%%name1%%%ext1%" && set file1=1
+## Final exit if source-file not exist
 if not %file1%==1 && endlocal && echo -e Abort: "%device1%%%path1%%%name1%%%ext1%" does not exist && set result=0 && goto :eov
+## Set find sfnpath2 if not '/' and if PATH2=PATH1 (case-insensitive)
 if not exist sfnpath2 && if /i "%path2%"=="%path1%" && set sfnpath2=%sfnpath1%
+## Check if path2 is SFN if not exist sfnpath2 already
 if not exist sfnpath2 &; call :checksfnpath "%path2%" &; if not %SFNPATH%==N && set sfnpath2=%path2% && set SFNPATH= ! set SFNPATH2=N && set SFNPATH=
-if not exist sfnpath2 && ATTRIBFT.LLL getsfnpath "%device2%%%path2%" &; if exist result && set /u sfnpath2=%result% && set result= ! endlocal && echo Abort: Short Path Name(s) of "%device2%%%path2%" not found && set result=0 && goto :eov
-if not exist name2 && if exist sfnpath2 && if exist sfnfile1 && fat dir %device2%%%sfnpath2%%%sfnfile1% > nul && endlocal && echo -e Abort: "%device2%%%path2%%%name1%%%ext1%" is an existing directory && set result=0 && goto :eov
-if exist name2 && call :checksfn "%name2%%%ext2%" &; if %SFN%==N && set "lfnfile=%name2%%%ext2%" && set LFN2=Y && set SFN2=N && set SFN= && set CASE= ! if %CASE%==Y && set /u sfnfile2=%name2%%%ext2% && set SFN= && set CASE2=Y && set CASE= ! set /u sfnfile2=%name2%%%ext2% && set SFN=
-if exist name2 && if not exist sfnfile2 && if %SFN2%==N && if %o%==/o &; ATTRIBFT.LLL getsfn "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set /u sfnfile2=%result% && set result= ! if exist message && set message=
-if not exist sfnfile2 && if exist %device2%%%sfnpath2%%%sfnfile1% && if not %o%==/o && if not %LFN2%==Y && endlocal && echo File "%name1%%%ext1%" exists already && set result=1 && goto :eov
-if exist sfnfile2 && if %SFN2%==N &; fat dir %device2%%%sfnpath2%%%sfnfile2% > nul &; if %LFN2%==Y && set sfnfile2= ! endlocal && echo Abort: "%name2%%%ext2%" is an existing directory on target && set result=0 && goto :eov
-if exist sfnfile2 && if %SFN2%==N &; if exist %device2%%%sfnpath2%%%sfnfile2% &; if %LFN2%==Y && if not %o%==/o && set sfnfile2= ! if not %o%==/o && endlocal && echo File "%name2%%%ext2%" exists already && set result=1 && goto :eov
-if exist name2 && if not exist sfnfile2 && if %SFN2%==N &; call :makesfnfile "%device2%%%sfnpath2%%%name2%%%ext2%" "file" &; if exist sfnfile && set /u sfnfile2=%sfnfile% && set sfnfile= ! endlocal && echo Abort: no available Short File Name found for "%device2%%%path2%%%name2%%%ext2%" && set result=0 && goto :eov
-if not exist name2 && set sfnfile2=%sfnfile1% &; if %SFN1%==N && set SFN2=N
-if exist name2 && if not /i "%path2%"=="%path1%" &; if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1 && if not %LFN2%==Y && if not %o%==/o && endlocal && echo -e Abort: "%device2%%%path2%%%name2%%%ext2%" is an existing file && set result=0 && goto :eov
+## Check for sfnpath2 on target (is always FAT-fs!); if sfnpath2 is not found: abort
+if "%sfnpath2%"=="/" && ATTRIBFT.LLL getsfnpath "%device2%/" &; if exist result && set "output2=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not exist sfnpath2 && ATTRIBFT.LLL getsfnpath "%device2%%%path2%" &; if exist result && set /u sfnpath2=%result% && set result= && set "output2=%output%" && set output= ! endlocal && echo Abort: Short Path Name(s) of "%device2%%%path2%" not found && set result=0 && goto :eov
+## Check if not exist target file-name if existing sfnfile1 is a directory on target
+if not exist name2 && if exist sfnfile1 && fat dir %device2%%%sfnpath2%%%sfnfile1% > nul && endlocal && echo -e Abort: "%device2%%%path2%%%name1%%%ext1%" is an existing directory && set result=0 && goto :eov
+## Check if target file-name on command-line is SFN (if exist)
+if exist name2 && call :checksfn "%name2%%%ext2%" &; if %SFN%==N && set SFN2=N && set SFN= && set CASE= ! if %CASE%==Y && set /u sfnfile2=%name2%%%ext2% && set SFN= && set CASE2=Y && set CASE= ! set /u sfnfile2=%name2%%%ext2% && set SFN= && set CASE=
+## Get sfnfile2 if file2 is given and if SFN2=N
+if exist name2 && if not exist sfnfile2 && if %SFN2%==N &; ATTRIBFT.LLL getsfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set /u sfnfile2=%result% && set result= && set output= ! if exist message && set message= && set output=
+## Find lfnfile2 from file-name on target if name2 exist; if found set lfnfile2 && set LFN2=Y but NOT SFN2=N if not already SFN2=N
+if exist name2 && if exist sfnfile2 && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
+## Check if sfnfile1 exists on target if not exist sfnfile2 ==>> if not LFN2=Y/SFN2=N ????
+if not exist sfnfile2 && if not "%sfnpath1%"=="%sfnpath2%" && if exist %device2%%%sfnpath2%%%sfnfile1% && if not %o%==/o && if not %SFN2%==Y && endlocal && echo File "%name1%%%ext1%" exists already && set result=1 && goto :eov
+## Check if LFN of sfnfile1 exists on target if not exist sfnfile2 ==>> if not LFN2=Y/SFN2=N ????
+if not exist sfnfile2 && if not "%sfnpath1%"=="%sfnpath2%" && if exist %device2%%%sfnpath2%%%sfnfile1% &; setlocal && ATTRIBFT.LLL getsfn input="%output2%" "%device2%%%sfnpath2%%%name1%%%ext1%" &; endlocal && set "result=%result%" &; if exist result && set "sfnfile2=%result%" && set LFN2=Y && set result=
+if not exist sfnfile2 && if not "%sfnpath1%"=="%sfnpath2%" && if exist %device2%%%sfnpath2%/"%name1%%%ext1%" &; setlocal && ATTRIBFT.LLL getsfn input="%output2%" "%device2%%%sfnpath2%%%name1%%%ext1%" &; endlocal && set "result=%result%" &; if exist result && set "sfnfile2=%result%" && set LFN2=Y && set result=
+## Find lfnfile2 from file-name on target if name2 NOT exist; if found set lfnfile2 && set LFN2=Y but NOT SFN2=N if not already SFN2=N
+if not exist name2 && if exist sfnfile2 && if %LFN2%==Y && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result= ! set LFN2=
+if not exist name2 && if exist sfnfile1 && if not exist sfnfile2 && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
+if not exist name2 && if not exist sfnfile1 && if not exist sfnfile2 && if %SFN1%==N && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%name1%%%ext1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
+## Check if sfnfile2 is a directory on target; exit if not SFN2=N
+if exist sfnfile2 &; fat dir %device2%%%sfnpath2%%%sfnfile2% > nul &; if %SFN2%==N && set sfnfile2= ! endlocal && echo Abort: "%name2%%%ext2%" is an existing directory on target && set result=0 && goto :eov
+## Check if sfnfile2 is an existing file on target; exit if not SFN2=N
+if exist sfnfile2 &; if exist %device2%%%sfnpath2%%%sfnfile2% &; if %SFN2%==N && if not %o%==/o && set sfnfile2= ! if not %o%==/o && endlocal && echo File "%name2%%%ext2%" exists already && set result=1 && goto :eov
+## Make SFN if SFN2=N, if not exist sfnfile2 already, exit if no SFN available
+if exist name2 && if not exist sfnfile2 && if %SFN2%==N &; crc32 %device1%/"%path1:~1%%%name1%%%ext1%" | set CRC32src=
+if exist name2 && if not exist sfnfile2 && if %SFN2%==N &; call :makesfnfile "%device2%%%sfnpath2%%%name2%%%ext2%" "file" CRC32=%CRC32src% &; if exist sfnfile && set /u sfnfile2=%sfnfile% && set sfnfile= && set CRC32src= ! endlocal && echo Abort: no available Short File Name found for "%device2%%%path2%%%name2%%%ext2%" && set result=0 && goto :eov
+## if not exist file2 on command-line: make SFN from file1 if SFN1=N and LFN not exists on target. Exit if no SFN available
+if not exist name2 && if %SFN1%==N && if not /i "%name1%%%ext1%"=="%lfnfile1%" && if not /i "%name1%%%ext1%"=="%lfnfile2%" &; crc32 %device1%/"%path1:~1%%%name1%%%ext1%" | set CRC32src=
+if not exist name2 && if %SFN1%==N && if not /i "%name1%%%ext1%"=="%lfnfile1%" && if not /i "%name1%%%ext1%"=="%lfnfile2%" &; call :makesfnfile "%device2%%%sfnpath2%%%name1%%%ext1%" "file" CRC32=%CRC32src% &; if exist sfnfile && set /u sfnfile=%sfnfile% && set CRC32src= ! endlocal && echo Abort: no available Short File Name found for "%device2%%%path2%%%name1%%%ext1%" && set result=0 && goto :eov
+## Check existence of filename2 on target and set file2=1
+if exist name2 && if not /i "%path2%"=="%path1%" &; if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1 && if not %SFN2%==Y && if not %o%==/o && endlocal && echo -e Abort: "%device2%%%path2%%%name2%%%ext2%" is an existing file && set result=0 && goto :eov
+## Check if filename2 is a directory
 if exist name2 && if not exist file2 && if not /i "%path2%"=="%path1%" &; fat dir %device2%%%sfnpath2%%%sfnfile2% > nul && endlocal && echo -e Abort: "%device2%%%path2%%%name2%%%ext2%" is an existing directory && set result=0 && goto :eov
-if %SFN2%==N && if exist name2 && set result= &; ATTRIBFT.LLL getsfn "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && if not %o%==/o && endlocal && echo -e "%device2%%%path2%%%name2%%%ext2%" exists already && set result=0 && goto :eov ! if exist result && set "lfnfile=%name2%%%ext2%" && set result= ! if exist message && set message=
-if %SFN2%==N && if exist name2 && if exist file2 && if exist result && if "%result%"=="sfnfile2%" && if %LFN2%==Y && if %o%==/o && set result= && ATTRIBFT.LLL dellfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set sfnfile2= && set result= ! endlocal && echo -e Abort: can not delete LFN on target "%device2%%%path2%%%name2%%%ext2%" && set result=0 && goto :eov
-if /i %filesysS:~0,3%==fat && if exist sfnfile1 && if exist name2 && if not %SFN1%==N && if %o%==/o && if "%name1%%%ext1%"=="%name2%%%ext2%" &; setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile=%result%" && set SFN2=N && set result=
-if %SFN1%==N && if not %SFN2%==N && if exist file2 && if %o%==/o && if "%sfnfile2%"=="%name2%%%ext2%" && ATTRIBFT.LLL getsfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && if "%result%"=="%sfnfile2%" && set result= && ATTRIBFT.LLL dellfn "%device2%%%sfnpath2%%%name2%%%ext2%" &; debug msg=0 &; if exist result && set LFN2= && set result= ! endlocal && echo BADdelLFN on target - run SCANDISKW or CHECKDSK from Windows etcetera && set result=0 && goto :eov
-if %SFN1%==N && if %SFN2%==N && if exist file2 && if %o%==/o && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && if not "%result%"=="%name2%%%ext2%" && set result= && ATTRIBFT.LLL dellfn "%device2%%%sfnpath2%%%result%" &; if exist result && set LFN2= && set result= ! endlocal && echo BADdelLFN on target - run SCANDISKW or CHECKDSK from Windows etcetera && set result=0 && goto :eov
-if %SFN2%==N && if exist file2 && if %o%==/o && if exist result && if "%result%"=="%name2%%%ext2%" && ATTRIBFT.LLL getsfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if %result%==%sfnfile2% && set SFN1= && set SFN2= && set lfnfile= && set LFN1= && set LFN2= ! if exist message && set message=
+## Check if filename2 exist on target; exit if yes AND if not '/o'
+if %SFN2%==N && if exist name2 && set result= &; ATTRIBFT.LLL getsfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && if not %o%==/o && endlocal && echo -e "%device2%%%path2%%%name2%%%ext2%" exists already && set result=0 && goto :eov ! if exist result && set sfnfile2=%result% && set result= && set output= ! if exist message && set message= && set output=
+## ALWAYS Delete lfn of sfnfile2 first if file2 on command-line is LFN [otherwise risk of orphaned LFN's]
+if %SFN2%==N && if exist name2 && if exist file2 && if exist result && if "%result%"=="%sfnfile2%" && if %LFN2%==Y && if %o%==/o && set result= && ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set lfnfile2= && set result= && set output= ! endlocal && echo -e Abort: can not delete LFN on target "%device2%%%path2%%%name2%%%ext2%" && set result=0 && goto :eov
+## Get LFN1 of SFN filename1=filename2 on command-line from fat-source ===>>> NEEDED?
+if /i %filesysS:~0,3%==fat && if exist sfnfile1 && if exist name2 && if not %SFN1%==N && if "%name1%%%ext1%"=="%name2%%%ext2%" &; setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile1=%result%" && set SFN2=N && set result=
+## Delete existing LFN2 for '/o' if not equal to LFN-filename2 on command-line
+if %SFN1%==N && if %SFN2%==N && if exist file2 && if %o%==/o && if not %DELLFN2%==N && set result= &; setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; endlocal && set "result=%result%" &; if exist result && if not "%result%"=="%name2%%%ext2%" && set result= && ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%result%" &; if exist result && set DELLFN2=N && set LFN2= && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set message= && set DELLFN2=N && set LFN2= && set result= && set output= ! endlocal && echo BADdelLFN on target - run SCANDISKW or CHECKDSK from Windows etcetera && set result=0 && goto :eov
+## reset SFN1/LFN1/SFN2/LFN2/lfnfile/lfnfile2 if LFN-file-name2 is already on target, including right case (from command-line)
+if %SFN2%==N && if exist file2 && if %o%==/o && if exist result && if "%result%"=="%name2%%%ext2%" && ATTRIBFT.LLL getsfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if %result%==%sfnfile2% && set SFN1= && set SFN2= && set lfnfile1= && set LFN1= && set LFN2= && set lfnfile2= && set output= ! if exist message && set message= && set output=
+## Extra check if file2=1 with 'if %del%==/r && if %o%==/o' if exist sfnfile1 on target en will be overwritten ==>> NEEDED?
 if %del%==/r && if %o%==/o && if not %file2%==1 &; if exist %device2%%%sfnpath2%%%sfnfile1% && set file2=1 ! set file2=
+## Used to check if file-name on source is a directory (not on NTFS) and exit if argsize not exist
 debug msg=1
 raw cat --length=0 %device1%/"%path1:~1%%%name1%%%ext1%" | set argsize=
+#BADifSpace#raw cat --length=0 %device1%%%path1%%%name1%%%ext1% | set argsize=
 debug msg=0
 if not exist argsize && endlocal && echo -e Abort: "%device1%%%path1%%%name1%%%ext1%" is a directory && set result=0 && goto :eov
+## Get filesize if not a directory
 raw cat --length=0 %device1%/"%path1:~1%%%name1%%%ext1%" > nul ;; set /a argsize=%@retval% > nul
+## Abort if filesize on not-fat source is not >=0 and <4GB
 if not %argsize%>=0 && endlocal && echo -e Abort: filesize of "%device1%%%path1%%%name1%%%ext1%" is 4GB or higher && set result=0 && goto :eov ! set /a argsize=%argsize%&0xffffffff > nul
-if not /i %filesysS:~0,3%==fat && if not exist sfnfile2 && if %SFN1%==N &; call :makesfnfile "%device1%%%path1%%%name1%%%ext1%" "file" &; if exist sfnfile && set /u sfnfile2=%sfnfile% && set sfnfile= && set "lfnfile=%lfn%" && set lfn= ! endlocal && echo Abort: no available Short File Name found for "%device1%%%path1%%%name1%%%ext1%" && set result=0 && goto :eov
-if not /i %filesysS:~0,3%==fat && if exist sfnfile2 && if %SFN1%==N &; if "%lfnfile%"=="%sfnfile2%" && set lfnfile= && set SFN2= && set LFN2=
+#BADifSpace#raw cat --length=0 %device1%%%path1%%%name1%%%ext1% > nul ;; set /a argsize=%@retval%&0xffffffff > nul
+## Make sfnfile1 on non-FAT source if not exist sfnifle1/2 AND if filename on source is LFN
+if not /i %filesysS:~0,3%==fat && if not exist sfnfile && if not exist sfnfile1 && if not exist sfnfile2 && if %SFN1%==N &; crc32 %device1%/"%path1:~1%%%name1%%%ext1%" | set CRC32src=
+if not /i %filesysS:~0,3%==fat && if not exist sfnfile && if not exist sfnfile1 && if not exist sfnfile2 && if %SFN1%==N &; call :makesfnfile "%device2%%%path2%%%name1%%%ext1%" "file" "CRC32=%CRC32src%" &; if exist sfnfile && set /u sfnfile1=%sfnfile% && set /u sfnfile=%sfnfile% && set lfn= && set CRC32src= ! endlocal && echo Abort: no available Short File Name found for "%device1%%%path1%%%name1%%%ext1%" && set result=0 && goto :eov
+## set sfnfile2 if not exist on non-FAT
+if not /i %filesysS:~0,3%==fat && if not exist sfnfile2 &; if exist sfnfile && set sfnfile2=%sfnfile% ! if exist sfnfile1 && set sfnfile2=%sfnfile1% ! endlocal && echo Abort: sfnfile2 unknown && set result=0 && goto :eov
+## Remove lfnfile if equal to sfnfile2 ==>> NEEDED?
+if not /i %filesysS:~0,3%==fat && if exist sfnfile2 && if %SFN1%==N &; if "%name1%%%ext1%"=="%sfnfile2%" && set lfnfile= && set SFN2= && set LFN2=
+## Abort if sfnfile2 exist on target without '/o' if source is non-FAT ==>> NEEDED?
 if not /i %filesysS:~0,3%==fat && if exist sfnfile2 && if exist %device2%%%sfnpath2%%%sfnfile2% && if not %o%==/o && endlocal && echo Abort: "%sfnfile2%" is an existing file on target && set result=0 && goto :eov
+## Abort if sfnfile2 is a directory on target if source is non-FAT ==>> NEEDED?
 if not /i %filesysS:~0,3%==fat && if exist sfnfile2 && fat dir %device2%%%sfnpath2%%%sfnfile2% > nul && endlocal && echo Abort: "%device2%%%sfnpath2%%%sfnfile2%" is an existing directory && set result=0 && goto :eov
+## Check if sfnfile2 on target is read-only with 'if %o%==/o AND/OR if %del%==/r / =/a
+if not exist sfnfile2 && if %o%==/o &; if not %del%==/r if not %a%==/a |; if exist %device2%%%sfnpath2%%%sfnfile1% && ATTRIBFT.LLL isreadonly input="%output2%" "%device2%%%sfnpath2%%%sfnfile1%" &; if %result%==1 && set result= && set output= && call :gettargetattributes "%device2%%%sfnpath2%%%sfnfile1%" &; if not exist attrib && endlocal && echo Abort: failed to get attributes from "%device2%%%sfnpath2%%%sfnfile1%" && goto :eov
+if exist sfnfile2 && if %o%==/o &; if not %del%==/r if not %a%==/a |; if exist %device2%%%sfnpath2%%%sfnfile2% && ATTRIBFT.LLL isreadonly input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; if %result%==1 && set result= && set output= && call :gettargetattributes "%device2%%%sfnpath2%%%sfnfile2%" &; if not exist attrib && endlocal && echo Abort: failed to get attributes from "%device2%%%sfnpath2%%%sfnfile2%" && goto :eov
+## Set sfnfile2 on target is read-only to '-R' with 'if %o%==/o && if %del%==/r'
+if not exist sfnfile2 && call Fn.11 "%attrib%" "+r" &; if exist %device2%%%sfnpath2%%%sfnfile1% && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile1%" "-r" &; if not exist result && endlocal && echo Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile1%" && set success= && goto :eov ! set result= && set output=
+if exist sfnfile2 && call Fn.11 "%attrib%" "+r" &; if exist %device2%%%sfnpath2%%%sfnfile2% && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if not exist result && endlocal && echo Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile2%" && set success= && goto :eov ! set result= && set output=
+## Call :ddcopy if source is non-fat - exit afterwards if not success=Y or goto :makelfncopy to check/ make LFN on target
 if not /i %filesysS:~0,3%==fat && call :ddcopy &; if %success%==Y && goto :makelfncopy ! endlocal && echo Abort: dd-copy failed && set result=0 && goto :eov
+## Do not overwrite zerobyte sfnfile2, if exist goto :makelfncopy - otherwize errorcheck off
 if %argsize%==0 &; if exist %device2%%%sfnpath2%%%sfnfile2% && set success=Y && goto :makelfncopy ! errorcheck off
-if %argsize%==0 &; fat mkfile size=%argsize% %device2%%%sfnpath2%%%sfnfile2% > nul && set success=Y && goto :makelfncopy ! endlocal && echo Abort: can not create zerobyte file "%device2%%%sfnpath2%%%sfnfile2%" && set result=0 && goto :eov
-if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2%%%sfnfile2% && set success=Y ! set success=N
-## %result%=set_variables#
-if %success%==N && if %del%==/r && if %o%==/o && if %file2%==1 && setlocal && ATTRIBFT.LLL getattrib "%device2%%%sfnpath2%%%sfnfile2%" &; %result% &; if %r%==r && endlocal && set "attrib=%result%" ! endlocal
-if %success%==N && if %del%==/r && if %o%==/o && if %file2%==1 && if exist attrib && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if exist result && set retry=1 && set result= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
-if %retry%==1 && if /i %filesysS:~0,3%==fat && if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2%%%sfnfile2% > nul && set success=Y && set retry= ! set success=N
-if %success%==N && endlocal && echo Abort 1 of 'fat copy': FAT-error && set result=0 && goto :eov
-#STRANGE?#if %success%==N && endlocal && echo Abort 1: FAT-error && set result=0 && goto :eov
-if %a%==/a && if exist sfnfile2 && set attrib= && ATTRIBFT.LLL getattrib "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set "attrib=%result%" && set success=Y && set result= ! echo Failed to get attribute(s) from "%device1%%%sfnpath1%%%sfnfile1%" && set message=
-if %success%==Y && if exist attrib && setlocal && set r= && set h= && set s= && set a=
-if %success%==Y && if exist attrib && %attrib%
-if %success%==Y && if exist attrib && if %r%==r && set r=+r
-if %success%==Y && if exist attrib && if %s%==s && set s=+s
-if %success%==Y && if exist attrib && if %h%==h && set h=+h
-if %success%==Y && if exist attrib && endlocal && set "attrib=%r%%%s%%%h%"
-if %success%==Y && if not exist a && if exist attrib && if %file2%==1 && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "%attrib%" &; if exist result && set result= && set attrib= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile2%" && set attrib= && set message=
-if %success%==Y && if %a%==/a && if exist attrib && if exist sfnfile2 && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "%attrib%" &; if exist result && set result= && set attrib= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile2%" && set attrib= && set message=
-if /i %filesysS:~0,3%==fat && if not exist sfnfile2 && if not /i %sfnpath1%==%sfnpath2% &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% && set success=Y ! set success=N
-if %success%==N && if %del%==/r && if %o%==/o && if not exist sfnfile2 && setlocal && ATTRIBFT.LLL getattrib "%device2%%%sfnpath2%%%sfnfile1%" &; %result% &; if %r%==r && endlocal && set "attrib=%result%" ! endlocal
-if %success%==N && if %del%==/r && if %o%==/o && if not exist sfnfile2 && if exist attrib && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile1%" "-r" &; if exist result && set retry=1 && set result= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
-if %retry%==1 && if /i %filesysS:~0,3%==fat && if not exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% > nul && set success=Y && set retry= ! set success=N
-#NOT#if %success%==N && if %del%==/r && if %o%==/o && if %file2%==1 && ATTRIBFT.LLL isreadonly "%device2%%%sfnpath2%%%sfnfile2%" &; debug msg=0 &; if %result%==1 && set result= &; ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; debug msg=0 &; if %result%==1 && set retry=1 && set result= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
-if %success%==N && endlocal && echo Abort 2 of 'fat copy': FAT-error && set result=0 && goto :eov
-if %a%==/a && if not exist sfnfile2 && set attrib= && ATTRIBFT.LLL getattrib "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set "attrib=%result%" && set success=Y && set result= ! Failed to get attribute(s) from "%device1%%%sfnpath1%%%sfnfile1%" && set message=
-if %success%==Y && if exist attrib && setlocal && set r= && set h= && set s= && set a=
-if %success%==Y && if exist attrib && %attrib%
-if %success%==Y && if exist attrib && if %r%==r && set r=+r
-if %success%==Y && if exist attrib && if %s%==s && set s=+s
-if %success%==Y && if exist attrib && if %h%==h && set h=+h
-if %success%==Y && if exist attrib && endlocal && set "attrib=%r%%%s%%%h%"
-if %success%==Y && if not exist a && if exist attrib && if not exist sfnfile2 && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile1%" "%attrib%" &; if exist result && set result= && set attrib= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile1%" && set attrib= && set message=
-if %success%==Y && if %a%==/a && if exist attrib && if not exist sfnfile2 && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile1%" "%attrib%" &; if exist result && set result= && set attrib= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile1%" && set attrib= && set message=
+## Make sfnfile2 on target, fully silent. Exit if error and echo general error-message
+if %argsize%==0 && if exist sfnfile2 &; fat mkfile size=%argsize% %device2%%%sfnpath2%%%sfnfile2% > nul && set success=Y && goto :makelfncopy ! endlocal && echo Abort: can not create zerobyte file "%device2%%%sfnpath2%%%sfnfile2%" && set result=0 && goto :eov
+if %argsize%==0 && if not exist sfnfile2 &; fat mkfile size=%argsize% %device2%%%sfnpath2%%%sfnfile1% > nul && set success=Y && goto :makelfncopy ! endlocal && echo Abort: can not create zerobyte file "%device2%%%sfnpath2%%%sfnfile1%" && set result=0 && goto :eov
+## Copy sfnfile1 to sfnfile2 if sfnfile2 exist. If not success=Y set retry=1
+if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2%%%sfnfile2% && set success=Y ! set success=N && set retry=1
+## Retry once if retry=1
+if %retry%==1 && if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2%%%sfnfile2% > nul && set success=Y && set retry= ! set success=N
+## Exit if no success
+if %success%==N && endlocal && set result=0 && goto :eov
+## Copying sfnfile2 ready: goto :makelfncopy
+if %success%==Y && if exist sfnfile2 && goto :makelfncopy ! set retry= && set success=
+## Copy sfnfile1 if not exist sfnfile2 and if direcories not equal; retry once
+if not exist sfnfile2 && if not /i %device1%%%sfnpath1%==%device2%%%sfnpath2% &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% && set success=Y ! set success=N && set retry=1
+if %retry%=1 &; if not exist sfnfile2 && if not /i %device1%%%sfnpath1%==%device2%%%sfnpath2% &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% && set success=Y ! set success=N && set retry=1
+## Abort if no success
+if %success%==N && endlocal && set result=0 && goto :eov
 :makelfncopy
+## Set sfnfile2 if not exist to sfnfile1
 if not exist sfnfile2 && set sfnfile2=%sfnfile1%
-if %CASE1%==Y && if not exist name2 && set SFN2=N && set LFN2=Y && set "lfnfile=%name1%%%ext1%" && if exist %device2%%%sfnpath2%%%sfnfile1% && set file2=1
-if %CASE2%==Y && if exist name2 && set SFN2=N && set LFN2=Y && set "lfnfile=%name2%%%ext2%" && if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1
-if %CASE1%==Y && if %SFN2%==N && if %file2%==1 && ATTRIBFT.LLL getlfn "%device2%%%sfnpath2%%%sfnfile1%" &; if exist result && set "lfnfile=%result%" && set LFN2=Y && set result= ! if exist message && set message=
-if %CASE2%==Y && if %SFN2%==N && if exist name2 && if %file2%==1 && ATTRIBFT.LLL getlfn "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set "lfnfile=%result%" && set LFN2=Y && set result= ! if exist message && set message=
-## dellfn really needed on target?
-if %success%==Y && set result=1 && if %SFN2%==N && if %LFN2%==Y && if exist name2 && if not "%name2%%%ext2%"=="%lfnfile%" && set result= &; ATTRIBFT.LLL dellfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set result= ! echo 1 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if %file2%==1 && if %SFN2%==N && if %LFN2%==Y && if not exist name2 && if not "%name1%%%ext1%"=="%lfnfile%" && set result= &; ATTRIBFT.LLL dellfn input="%output%" "%device2%%%sfnpath2%%%name1%%%ext1%" &; if exist result && set result= ! echo 2 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if not %SFN2%==N && if exist name2 && if not %CASE2%==Y && set result= &; ATTRIBFT.LLL dellfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" &; if exist result && set result= ! echo 3 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if %SFN2%==N && if %LFN2%==Y && if exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && echo 4 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if %SFN2%==N && if %LFN2%==Y && if not exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device2%%%sfnpath2%%%name1%%%ext1%" "%sfnfile2%" &; if not exist result && echo 5 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if %SFN2%==N && if not %LFN2%==Y && if exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if not exist result && echo 6 $[0x00]"$[0x07]%message%$[0x00]" && set message=
-if %success%==Y && set result=1 && if %SFN2%==N && if not %LFN2%==Y && if not exist name2 && if exist lfnfile && set result= &; ATTRIBFT.LLL makelfn "%device2%%%sfnpath2%%%lfnfile%" "%sfnfile2%" &; if not exist result && echo 7 $[0x00]"$[0x07]%message%$[0x00]" && set message=
+## Write attributes on fat-target if got from fat-source with '/a'
+if %success%==Y && if not exist a && if exist attrib && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%attrib%" &; if exist result && set result= && set attrib= && set output= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile2%" && set attrib= && set message= && set output=
+if %a%==/a && if /i %filesysS:~0,3%==fat &; set attrib= && call :setsourceattributes "%device1%%%sfnpath1%%%sfnfile1%" "%device2%%%sfnpath2%%%sfnfile2%" &; if exist message && echo %message% && set message=
+## Check if LFN of file2 exist (if sfnfile2 exists)
+if not exist name2 && if exist %device2%%%sfnpath2%%%sfnfile2% && set result= && set file2=1 &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
+## set file2=1 if sfnfile2 exists
+if exist name2 && if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1
+#BAD#if %CASE2%==Y && if exist name2 && set SFN2=N && set "lfnfile=%name2%%%ext2%" && if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1
+## Delete LFN (lfnfile2) on target AND to be overwritten with other LFN from target command-line
+if %success%==Y && set result=1 && if %SFN2%==N && if %LFN2%==Y && if exist name2 && if exist lfnfile2 && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Delete LFN (lfnfile2) on target AND to be overwritten with other LFN from source command-line
+if %success%==Y && set result=1 && if %LFN1%==Y && if %LFN2%==Y && if not exist name2 && if exist lfnfile2 && if not "%lfnfile1%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Delete LFN on target to be overwritten if existing target filename2 on command-line is SFN with CASE (MUST be different from existing case!) AND target lfnfile2 exists
+if %success%==Y && set result=1 && if exist name2 && if exist lfnfile2 && if %CASE2%==Y && if %LFN2%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+#BAD#if %success%==Y && set result=1 && if %SFN2%==N && if exist name2 && if %CASE2%==Y && if %LFN2%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Make LFN if target filename2 on command-line is LFN AND no LFN on source is found (i.e. non-fat or not exist)
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if exist name2 && if %SFN2%==N && if not %LFN1%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Make LFN if source filename1 on command-line is LFN AND target filename is empty AND no LFN on source is found (i.e. non-fat or not exist)
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if not exist name2 && if %SFN1%==N && if not exist lfnfile1 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name1%%%ext1%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Make LFN if target filename2 on command-line is LFN AND no LFN found on target (i.e. not exist)
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %SFN2%==N && if not %LFN2%==Y && if exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Make LFN if source filename1 on command-line is LFN AND target filename is empty AND no LFN found on source (i.e. non-fat)
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %LFN1%==Y && if not exist name2 && if exist lfnfile1 && if not "%lfnfile1%"=="%lfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile1%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %CASE2%==Y && if exist name2 && if exist lfnfile && if not exist lfnfile2 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
 if not exist result && set result=0 ! set result=1
 endlocal && set result=%result%
 goto :eov
@@ -498,9 +569,9 @@ if "%ext%"=="." && set ext=
 if exist name && set "path=%path%%%name%%%ext%" ! if not "%path%"=="/" && set "path=%path:~0,-1%"
 if "%path%"=="/" && set sfnpath=/
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-if not "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%%%path%/" &; if exist result && set /u sfnpath=%result:~0,-1% && set "outputOK=%output%" && set result= ! endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
+if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%%%path%/" &; if exist result && set /u sfnpath=%result:~0,-1% && set "output1=%output%" && set result= ! endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
 if not exist sfnpath && endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
-#ADDlfn2path#
 if not "%sfnpath%"=="/" && setlocal && set mdbase=0x300 &; echo -n > (md)%mdbase%+1 && pause --wait=0 %sfnpath%/ > (md)%mdbase%+1 && cat --locate=/ --replace=\x20 (md)%mdbase%+1 > nul && cat (md)%mdbase%+1 | call :getlfnpath &; if exist lfnpath && endlocal && set "path=%lfnpath%" ! endlocal
 ## Extra space in next call is needed!
 fat dir %a% %device%%%sfnpath% | call :fatdir  &; if %error%>=1 && echo -e \x20\x20$[0x08]Not parsed %error% folders/ files
@@ -530,10 +601,11 @@ if exist DIRNAME && set DIRNAME=%DIRNAME% &; if not %@retval%<=8 && set temprslt
 if exist DIREXT && set DIREXT=%DIREXT% &; if not %@retval%<=4 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirend
 if exist FILENAME && set FILENAME=%FILENAME% &; if not %@retval%<=8 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirend
 if exist FILEEXT && set FILEEXT=%FILEEXT% &; if not %@retval%<=4 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirend
-if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; if exist result && set "lfnfile=%result%" && set result= ! set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message=
+if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 if exist FILESIZE && if /i %ARG5%==KB && set FILESIZE=%FILESIZE%\x20KB && shift
-if exist FILENAME && if exist FILESIZE && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath%/%FILENAME%%%FILEEXT%" &; if exist result && set "lfnfile=%result%" && set result= ! set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message=
+if exist FILENAME && if exist FILESIZE && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%FILENAME%%%FILEEXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 call Fn.4 ;; set /a y=%@retval%>>8 > nul
+#ORG#;; if %y%<=9 && set y=0%y%
 if not exist lfnfile && if exist DATE && if exist TIME && if exist DIRNAME && call :Fn.5 0 %y% && echo -n -e %DATE%\x20%TIME% && call :Fn.5 31 %y% && echo -e $[0x00] $[0x07]<%DIRNAME%%%DIREXT%>\t$[0x08]%message:~0,22%
 if exist lfnfile && if exist DATE && if exist TIME && if exist DIRNAME && call :Fn.5 0 %y% && echo -P:%y%%00 -n -e %DATE%\x20%TIME% && call :Fn.5 31 %y% && echo -e $[0x00]"$[0x07]<%lfnfile%>$[0x00]"
 if not exist lfnfile && if exist DATE && if exist TIME && if exist FILENAME && if exist FILESIZE && call :Fn.5 0 %y% && echo -n -e %DATE%\x20%TIME%\x20%FILESIZE% && call :Fn.5 31 %y% && echo -n -e $[0x00] $[0x07]%FILENAME% && call :Fn.5 41 %y% && echo -e %FILEEXT:~1%\t$[0x08]%message:~0,22%
@@ -569,10 +641,9 @@ if "%ext%"=="." && set ext=
 if exist name && set "path=%path%%%name%%%ext%" ! if not "%path%"=="/" && set "path=%path:~0,-1%"
 if "%path%"=="/" && set sfnpath=/
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set /u sfnpath=/ && set "outputOK=%output%" && set result= ! endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
-if not "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%%%path%/" &; if exist result && set /u sfnpath=%result:~0,-1% && set "outputOK=%output%" && set result= ! endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
+if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! echo Abort: "%message%" && endlocal && set result=0 && goto :eov
+if not "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%%%path%/" &; if exist result && set /u sfnpath=%result:~0,-1% && set "output1=%output%" && set result= ! endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
 if not exist sfnpath && endlocal && echo Abort: Short File Name path not found && set result=0 && goto :eov
-#ADDlfn2path#
 if not "%sfnpath%"=="/" && setlocal && set mdbase=0x300 &; echo -n > (md)%mdbase%+1 && pause --wait=0 %sfnpath%/ > (md)%mdbase%+1 && cat --locate=/ --replace=\x20 (md)%mdbase%+1 > nul && cat (md)%mdbase%+1 | call :getlfnpath &; if exist lfnpath && endlocal && set "path=%lfnpath%" ! endlocal
 ## Extra space in next call is needed!
 fat dir %a% %device%%%sfnpath% | call :fatdirx  &; if %error%>=1 && echo -e \x20\x20$[0x08]Not parsed %error% folders/ files
@@ -604,11 +675,13 @@ if exist DIREXT && set DIREXT=%DIREXT% &; if not %@retval%<=4 && set temprslt=1 
 if not exist DATE if not exist TIME |; if not exist DIRNAME && set FILEEXT=%ARG3ext% && set FILESIZE=%ARG4% && set FILENAME=%ARG3name%
 if exist FILENAME && set FILENAME=%FILENAME% &; if not %@retval%<=8 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirxend
 if exist FILEEXT && set FILEEXT=%FILEEXT% &; if not %@retval%<=4 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirxend
-## First to attempt after restart give no good call Fn.4 with echo's longer than a line
-if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; debug msg=0 &; if exist result && set "lfnfile=%result%" && set result= ! set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message=
+## first to attempt after restart give no good call Fn.4 with echo's longer than a line
+if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 if exist FILESIZE && if /i %ARG5%==KB && set FILESIZE=%FILESIZE%\x20KB && shift
-if exist FILENAME && if exist FILESIZE && ATTRIBFT.LLL getlfn input="%output%" "%device%%%sfnpath%/%FILENAME%%%FILEEXT%" &; debug msg=0 &; if exist result && set "lfnfile=%result%" && set result= !  set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message=
+if exist FILENAME && if exist FILESIZE && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%FILENAME%%%FILEEXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 call Fn.4 ;; set /a y=%@retval%>>8 > nul
+#ORG#;;if %y%<=9 && set y=0%y%
+#NOTBETTER#if exist lfnfile && if exist DIRNAME && echo -P:%y%%00 -e -n <%DIRNAME%%%DIREXT%> && echo -P:%y%%26 -e -n $[0x00]"$[0x07]<%lfnfile%>$[0x00]" && echo
 if exist lfnfile && if exist DIRNAME && call :Fn.5 0 %y% && echo -e -n <%DIRNAME%%%DIREXT%> && call :Fn.5 24 %y% && echo -e $[0x00]"$[0x07]<%lfnfile%>$[0x00]"
 if not exist lfnfile && if exist message && if exist DIRNAME && call :Fn.5 0 %y% && echo -e -n <%DIRNAME%%%DIREXT%> && call :Fn.5 24 %y% && echo -e $[0x00]"$[0x08]%message%$[0x00]"
 if not exist lfnfile && if not exist message && if exist DIRNAME && call :Fn.5 0 %y% && echo -e <%DIRNAME%%%DIREXT%>
@@ -628,7 +701,7 @@ goto :fatdirxloop
 :getcase
 setlocal && set *
 errorcheck off
-## Seems to be needed
+## Seems to be needed???
 set mdbase=0x300
 set device=%~d1
 set "path=%~p1"
@@ -636,6 +709,7 @@ set "testfile=%~nx1"
 if not exist %device%/"%path:~1%%%testfile%" && endlocal && goto :eof
 call Fn.11 "%testfile%" "\x3D" && echo "%testfile%" > (md)%mdbase%+1 && cat --locate=\x3D --replace=\x3F (md)%mdbase%+1 && set qmark=Y && cat (md)%mdbase%+1 | set testfile= &; set "testfile=%testfile:~1,-1%"
 ls %device%/"%path:~1%%%testfile%" | call :case
+#OLD?#if not exist dirname && call Fn.11 "%testname:~1%" "~" && set /u dirname=%testname%
 endlocal && set "name=%name%" && set "ext=%ext%" && set result=%result%
 goto :eof
 ::
@@ -646,6 +720,7 @@ set "name=%~n1" &; echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
 set "ext=%~x1" &; echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
 if not /i "%name%%%ext%"=="%testfile%" && set result=0 && set name= && set ext= && shift && goto :case
 set result=
+#OLD#set /u "HIGHCASE=%name%" &; if not "%HIGHCASE%"=="%dirname%" && set CASE=Y
 shift
 goto :case
 ::
@@ -663,20 +738,22 @@ call Fn.11 "%path%" "{" && endlocal && set SFNPATH=N && goto :eof
 call Fn.11 "%path%" "}" && endlocal && set SFNPATH=N && goto :eof
 call Fn.11 "%path%" "=" && endlocal && set SFNPATH=N && goto :eof
 call Fn.11 "%path%" "?" && endlocal && set SFNPATH=N && goto :eof
+#OLD#call Fn.11 "%path%" "" && endlocal && set SFNPATH=N && goto :eof
 echo "%path%" > (md)%mdbase%+1
 #NOTNEEDEDANYMORE#call Fn.11 "%path%" " " && call :lsspaces
 cat --locate=/ --replace=\x20 (md)%mdbase%+1 > nul
 cat --locate=\x22 --replace=\x20 (md)%mdbase%+1 > nul
 cat --locate=\x3D --replace=\x3F (md)%mdbase%+1 > nul && set qmark=Y
 cat (md)%mdbase%+1 | call :finddirectory
+#ORG#set sfnpath=/ && cat (md)%mdbase%+1 | call :finddirectory
 endlocal && set SFNPATH=%SFNPATH%
 goto :eof
 ::
 :getlfnpath
 if "%~1"=="" && goto :eof
 set lfn= && set sfn= && set message=
-ATTRIBFT.LLL getsfn "%device%%%lfnpath%/%~1" &; if exist result && if "%result%"=="%~1" && set sfn=%~1 ! if exist result && set "lfn=%result=%" && set result= ! set /u "sfn=%~1"
-if exist sfn &; ATTRIBFT.LLL getlfn "%device%%%lfnpath%/%sfn%" &; if exist result && set "lfn=%result%" && set result=
+ATTRIBFT.LLL getsfn input="%output1%" "%device%%%lfnpath%/%~1" &; if exist result && if "%result%"=="%~1" && set sfn=%~1 ! if exist result && set "lfn=%result=%" && set result= ! set /u "sfn=%~1"
+if exist sfn &; ATTRIBFT.LLL getlfn input="%output1%" "%device%%%lfnpath%/%sfn%" &; if exist result && set "lfn=%result%" && set result=
 if not exist sfn && if not exist lfn && set /u sfn=%~1
 if exist lfn && set "lfnpath=%lfnpath%/%lfn%" ! set "lfnpath=%lfnpath%/%sfn%"
 shift
@@ -716,11 +793,12 @@ set mdbase=0x300
 set "file1=%device1%%%path1%%%name1%%%ext1%"
 call Fn.11 "%file1%" "\x20" && echo %file1% > (md)%mdbase%+1 && call :lsspaces &; cat (md)%mdbase%+1 | set file1=
 raw crc32 %file1% > nul ;; set /A CRC32SRC=%@retval%&0xffffffff > nul
+if exist %device2%%%sfnpath2%%%sfnfile2% &; raw crc32 %device2%%%sfnpath2%%%sfnfile2% > nul &; set /A CRC32TGT=%@retval%&0xffffffff > nul &; if %CRC32SRC%==%CRC32TGT% && endlocal && set success=Y && goto :eof
 ## Unsigned value to prevent negative argsize with almost 4 GB-file above 0x7FFFFFF
+if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %del%==/r && setlocal && ATTRIBFT.LLL getattrib "%device2%%%sfnpath2%%%sfnfile2%" &; %result% &; if %r%==r && endlocal && set attrib=r ! endlocal && set attrib=
+if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %attrib%==r && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if not exist result && endlocal && echo Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile2%" && set success= && goto :eov
 if exist %device2%%%sfnpath2%%%sfnfile2% &; if %o%==/o && fat del %device2%%%sfnpath2%%%sfnfile2% && set deleted=Y ! endlocal && set success= && goto :eof
 if exist %device2%%%sfnpath2%%%sfnfile2% && if not %deleted%==Y && endlocal && set success= && goto :eof
-if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %del%==/r && setlocal && ATTRIBFI.LLL getattrib "%device2%%%sfnpath2%%%sfnfile2%" &; %result% &; if %r%==r && endlocal && set attrib=r ! endlocal && set attrib=
-if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %attrib%==r && ATTRIBFT.LLL setattrib "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if not exist result && endlocal && echo Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile2%" && set success= && goto :eov
 errorcheck off
 fat mkfile size=%argsize% %device2%%%sfnpath2%%%sfnfile2% > nul && set created=Y ! endlocal && echo Abort: can not create "%device2%%%sfnpath2%%%sfnfile2%" && set success= && goto :eof
 if %created%==Y && if %argsize%==0 && endlocal && set success=Y && goto :eof
@@ -729,13 +807,14 @@ raw cat --length=0 %device2%%%sfnpath2%%%sfnfile2% > nul ;; if not %argsize%==%@
 if not exist file1 && raw dd if=%device1%%%path1%%%name1%%%ext1% of=%device2%%%sfnpath2%%%sfnfile2% > nul && set copied=Y
 if exist file1 && raw dd if=%file1% of=%device2%%%sfnpath2%%%sfnfile2% > nul && set copied=Y
 if not %copied%==Y && endlocal && goto :eof
-raw crc32 %device2%%%sfnpath2%%%sfnfile2% > nul ;;  set /A CRC32TGT=%@retval%&0xffffffff > nul
-if %CRC32SRC%==%CRC32TGT% && set success=Y
+raw crc32 %device2%%%sfnpath2%%%sfnfile2% > nul ;; set /A CRC32TGT=%@retval%&0xffffffff > nul
+if not %CRC32TGT%==0 && if %CRC32SRC%==%CRC32TGT% && set success=Y
 endlocal && set success=%success%
 goto :eof
 ::
 :checksfn
 setlocal && set *
+#ORG#set SFN=Y
 set "arg=%~1" &; set larg=%@retval% &; set /a larg=%larg% > nul
 set "argname=%~n1" &; set largname=%@retval% &; set /a largname=%largname% > nul
 set "argext=%~x1" &; set largext=%@retval% &; set /a largext=%largext% > nul
@@ -758,9 +837,10 @@ set "sfnpath=%~p1"
 set "argname=%~n1" &; set /a namelen=%@retval% > nul
 set "argext=%~x1" &; if exist argext && set "argext=%argext:~1%"
 set mode=%~2
-set /u "sfntest=%~nx3"
+if not "%~3"=="CRC32" && set /u "sfntest=%~nx3" ! set "CRC32src=%~4"
+#ORG#set /u "sfntest=%~nx3"
 #MAYBE#if %mode%==file && if not "%~3"=="" && set o=%~3
-#SplitSemicolonSuffixOffIfSource=ISO/UDF#
+## SplitSemicolonSuffixOffIfSource=ISO/UDF
 if exist argext && call Fn.11 "%argext%" ";" &; raw cat --skip=0x8001 --locatei=CD001 --length=5 %device%%0+17 > nul ! raw cat --skip=0x8001 --locatei=BEA --length=3 %device%%0+17 > nul &; echo -n > (md)0x300+1 && pause --wait=0 "%argext%" > (md)0x300+1 && cat --locate=\x22 --replace=\x0A (md)0x300+1 > nul && cat --locate=; (md)0x300+1 > nul &; set /a suffixln=%?% &; cat --length=%suffixln% (md)0x300+1 | set argext= && cat --skip=%suffixln% (md)0x300+1 | set clsuffix= &; checkrange 1:32768 calc %clsuffix:~1% || set "argext=%argext%%%clsuffix%" && set clsuffix=
 if exist argext && set "lfn=%argname%.%argext%" ! set "lfn=%argname%"
 if exist clsuffix && set /u "lfn=%lfn%"
@@ -798,20 +878,33 @@ if %namelen%>=9 && set "name=%name:~0,6%" && set dosuffix=Y
 if not %dosuffix%==Y &; if not %mode%==dir && if exist %device%%%sfnpath%%%name%%%ext% && if not /i %lfn%==%name%%%ext% && set "name=%name:~0,6%" && set dosuffix=Y ! fat dir %device%%%sfnpath%%%name%%%ext% > nul && if not /i %lfn%==%name%%%ext% && set "name=%name:~0,6%" && set dosuffix=Y
 if not %dosuffix%==Y &; if not %mode%==dir && if exist %device%%%sfnpath%%%name%%%ext% && if /i %lfn%==%name%%%ext% && endlocal && set sfnfile= && goto :eof ! fat dir %device%%%sfnpath%%%name%%%ext% > nul && if /i %lfn%==%name%%%ext% && endlocal && set sfnfile= && goto :eof
 if %dosuffix%==Y && if not exist %device%%%sfnpath%%%name%%~1%ext% && fat dir %device%%%sfnpath%%%name%%~1%ext% > nul || set "name=%name%%~1" && set done=Y
+if not exist done && if %dosuffix%==Y && if exist CRC32src &; if exist %device%%%sfnpath%%%name%%~1%ext% && fat dir %device%%%sfnpath%%%name%%~1%ext% > nul || crc32 %device%%%sfnpath%%%name%%~1%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~1" && set done=Y
 if not exist done && if %dosuffix%==Y && if not exist %device%%%sfnpath%%%name%%~2%ext% && fat dir %device%%%sfnpath%%%name%%~2%ext% > nul || set "name=%name%%~2" && set done=Y
+if not exist done && if %dosuffix%==Y && if exist CRC32src &; if exist %device%%%sfnpath%%%name%%~2%ext% && fat dir %device%%%sfnpath%%%name%%~2%ext% > nul || crc32 %device%%%sfnpath%%%name%%~2%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~2" && set done=Y
 if not exist done && if %dosuffix%==Y && if not exist %device%%%sfnpath%%%name%%~3%ext% && fat dir %device%%%sfnpath%%%name%%~3%ext% > nul || set "name=%name%%~3" && set done=Y
+if not exist done && if %dosuffix%==Y && if exist CRC32src &; if exist %device%%%sfnpath%%%name%%~3%ext% && fat dir %device%%%sfnpath%%%name%%~3%ext% > nul || crc32 %device%%%sfnpath%%%name%%~3%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~3" && set done=Y
 if not exist done && if %dosuffix%==Y && if not exist %device%%%sfnpath%%%name%%~4%ext% && fat dir %device%%%sfnpath%%%name%%~4%ext% > nul || set "name=%name%%~4" && set done=Y
+if not exist done && if %dosuffix%==Y && if exist CRC32src &; if exist %device%%%sfnpath%%%name%%~4%ext% && fat dir %device%%%sfnpath%%%name%%~4%ext% > nul || crc32 %device%%%sfnpath%%%name%%~4%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~4" && set done=Y
 if not exist done && if %dosuffix%==Y && set "name=%name%?"
 if %name:~-1,1%==? && ATTRIBFT.LLL calclfnhash "%lfn%" &; if exist result && set "name=%name:~0,2%%%result%" && set LFN=NT && set result= ! endlocal && echo BAD lfnhash not calculated && set sfnfile= && goto :eof
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~1%ext% && fat dir %device%%%sfnpath%%%name%%~1%ext% > nul || set "name=%name%%~1" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~1%ext% && fat dir %device%%%sfnpath%%%name%%~1%ext% > nul || crc32 %device%%%sfnpath%%%name%%~1%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~1" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~2%ext% && fat dir %device%%%sfnpath%%%name%%~2%ext% > nul || set "name=%name%%~2" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~2%ext% && fat dir %device%%%sfnpath%%%name%%~2%ext% > nul || crc32 %device%%%sfnpath%%%name%%~2%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~2" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~3%ext% && fat dir %device%%%sfnpath%%%name%%~3%ext% > nul || set "name=%name%%~3" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~3%ext% && fat dir %device%%%sfnpath%%%name%%~3%ext% > nul || crc32 %device%%%sfnpath%%%name%%~3%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~3" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~4%ext% && fat dir %device%%%sfnpath%%%name%%~4%ext% > nul || set "name=%name%%~4" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~4%ext% && fat dir %device%%%sfnpath%%%name%%~4%ext% > nul || crc32 %device%%%sfnpath%%%name%%~4%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~4" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~5%ext% && fat dir %device%%%sfnpath%%%name%%~5%ext% > nul || set "name=%name%%~5" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~5%ext% && fat dir %device%%%sfnpath%%%name%%~5%ext% > nul || crc32 %device%%%sfnpath%%%name%%~5%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~5" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~6%ext% && fat dir %device%%%sfnpath%%%name%%~6%ext% > nul || set "name=%name%%~6" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~6%ext% && fat dir %device%%%sfnpath%%%name%%~6%ext% > nul || crc32 %device%%%sfnpath%%%name%%~6%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~6" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~7%ext% && fat dir %device%%%sfnpath%%%name%%~7%ext% > nul || set "name=%name%%~7" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~7%ext% && fat dir %device%%%sfnpath%%%name%%~7%ext% > nul || crc32 %device%%%sfnpath%%%name%%~7%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~7" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~8%ext% && fat dir %device%%%sfnpath%%%name%%~8%ext% > nul || set "name=%name%%~8" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~8%ext% && fat dir %device%%%sfnpath%%%name%%~8%ext% > nul || crc32 %device%%%sfnpath%%%name%%~8%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~8" && set LFN=
 if %LFN%==NT && if not exist %device%%%sfnpath%%%name%%~9%ext% && fat dir %device%%%sfnpath%%%name%%~9%ext% > nul || set "name=%name%%~9" && set LFN=
+if %LFN%==NT && if exist %device%%%sfnpath%%%name%%~9%ext% && fat dir %device%%%sfnpath%%%name%%~9%ext% > nul || crc32 %device%%%sfnpath%%%name%%~9%ext% | set CRC32tgt= &; if exist CRC32tgt && if %CRC32tgt%==%CRC32src% && set "name=%name%%~9" && set LFN=
 if %LFN%==NT && endlocal && echo All File Names %name:~0,-1%%1-9%ext% in use && goto :eof
 set /u sfnfile=%name%%%ext%
 endlocal && set sfnfile=%sfnfile% && set "lfn=%lfn%"
@@ -832,6 +925,7 @@ goto :eof
 ::
 :dellfn
 if not "%~3"=="" && echo Abort: too many arguments, argument "%~3" is not valid && goto :eov
+if "%~2"=="" && echo Abort: target is missing && set result=0 && goto :eov
 setlocal && set *
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && echo Abort: forbidden chars in "%~2" && set result=0 && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && echo Abort: target "%device%" is not a fat device && set result=0 && goto :eov
@@ -851,11 +945,46 @@ if not exist ext && call Fn.11 "%name:~-1,1%" " " && set "name=%name:~0,-1%" && 
 if not exist ext && call Fn.11 "%name:~-1,1%" "." && set "name=%name:~0,-1%" && goto :dellfnnospacedotloop
 if "%ext%"=="." && set ext=
 call :checkvalidname "%name%%%ext%" &; if %forbiden%==Y && endlocal && echo Abort: "%name%%%ext%" is not a valid filename && set result=0 && goto :eov
-ATTRIBFT.LLL getlfn "%device%%%path%%%name%%%ext%" &; if exist result && set "lfnfile=%result%" && set result= ! set "lfnfile=%name%%%ext%"
-ATTRIBFT.LLL dellfn "%device%%%path%%%lfnfile%"
+ATTRIBFT.LLL getlfn "%device%%%path%%%name%%%ext%" &; if exist result && set "lfnfile=%result%" && set result= ! set "lfnfile=%name%%%ext%" && set output=
+ATTRIBFT.LLL dellfn input="%output%" "%device%%%path%%%lfnfile%" &; if exist result && set result=1 ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set result=1 && set message= ! if exist message && echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set result=
 if not exist result && set result=0 ! set result=1
 endlocal && set result=%result%
 goto :eov
+::
+:gettargetattributes
+setlocal && set * && set "output2=%output2%"
+ATTRIBFT.LLL getattrib input="%output2%" "%~1" &; if exist result && set "attrib=%result%" && set result= ! endlocal && set "message=Failed to get attribute(s) from "%~1"" && goto :eof
+## Process attributes-output of function 'getattrib' with '/a'
+%attrib%
+if %r%==r && set r=+r ! set r=-r
+if %s%==s && set s=+s ! set s=-s
+if %h%==h && set h=+h ! set h=-h
+if %a%==a && set a=+a ! set a=-a
+set "attrib=%r%%%s%%%h%%%a%"
+endlocal && set "attrib=%attrib%"
+goto :eof
+::
+:setsourceattributes
+setlocal && set * && set "output1=%output1%" && set "output2=%output2%"
+ATTRIBFT.LLL getattrib input="%output1%" "%~1" &; if exist result && set "attrib=%result%" && set result= && set output= ! endlocal && set "message=Failed to get attribute(s) from "%~1"" && goto :eof
+## Process attributes-output of function 'getattrib' with '/a'
+%attrib%
+if %r%==r && set r=+r ! set r=-r
+if %s%==s && set s=+s ! set s=-s
+if %h%==h && set h=+h ! set h=-h
+if %a%==a && set a=+a ! set a=-a
+set "attrib=%r%%%s%%%h%%%a%"
+ATTRIBFT.LLL setattrib input="%output2%" "%~2" "%attrib%" &; if exist result && set result= && set output= ! endlocal && set "message=Failed to set attribute(s) %attrib% on "%~2"" && goto :eof
+ATTRIBFT.LLL getmoddate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
+ATTRIBFT.LLL setmoddate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
+ATTRIBFT.LLL getmodtime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
+ATTRIBFT.LLL setmodtime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
+ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
+ATTRIBFT.LLL setacctime input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
+ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
+if not %casebyte%==0x8 if not %casebyte%==0x10 if not %casebyte%==0x18 |; ATTRIBFT.LLL setntcasebyte input="%output2%" "%~2" "%casebyte%" &; if exist result && set result= ! endlocal && set "message=Failed to set NT-casebyte '%casebyte%' on "%~2"" && goto :eof
+endlocal && set "message=%message%"
+goto :eof
 ::
 :lastkey
 beep 0 1
@@ -897,7 +1026,7 @@ if "%~1"=="smallhelp" && echo Use 9: FATLFN.G4B /? && goto :eof
 setlocal
 pager status > nul ;; set /a pagerst=%@retval% > nul
 pager on
-echo FATLFN.G4B v0.2 (20241023), by deomsh
+echo FATLFN.G4B v0.2 (20241030), by deomsh
 echo Function: to make Grubutil 'fat' compatible with Long File Names
 echo Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
 echo Use 1: FATLFN.G4B mkdir FILE
