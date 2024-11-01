@@ -1,4 +1,4 @@
-## FATLFN.G4B v0.2 (20241023)
+## FATLFN.G4B v0.2 (20241101)
 
 <pre><code>Function: to make Grubutil 'fat' compatible with Long File Names
 Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
@@ -50,7 +50,7 @@ Grub4Dos 0.4.6a, Grubutil FAT >=15/02/2015
  On FAT32 partition >= 4GB use Grubutil FAT from 2023, april or later
 Grub4dos for UEFI: compatible, but soon 'Out of malloc memory' errors
 Found not compatible with Grub4Dos 0.4.5b / Grub4Dos 0.4.5c
-Needed: Loosely Linked Library ATTRIBFT.LLL (>=v0.8.1) - must be in same folder
+Needed: Loosely Linked Library ATTRIBFT.LLL (>=v0.9) - must be in same folder
  as FATLFN.G4B, or already loaded with insmod (NO change of name allowed)
     
 Examples:
