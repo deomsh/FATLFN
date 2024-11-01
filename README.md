@@ -102,6 +102,4 @@ Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':
 
 Use of switches, file attributes showed with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
 
-![FATLFN G4B examples with switches (with ATTRIBFT G4B attriballecho)](https://github.com/user-attachments/assets/d26c00ee-c89a-454e-973d-569fe0c1eef6)
-
-
+![FATLFN G4B examples with switches (with ATTRIBFT G4B attriballecho)](https://github.com/user-attachments/assets/182c05c1-d20c-4793-a59b-b30669ffcd60)
