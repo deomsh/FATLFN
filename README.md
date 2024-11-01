@@ -18,9 +18,9 @@ FILE (contains DEVICE/PATH/NAME.EXT), without DEVICE/ PATH on ROOT: '/'
 Function mkfile needs size=N => N is number of bytes, takes Nk/ Nm/ Ng bytes
 
 Optional Arguments:
-/o => overwrite
-/o:r => overwrite read-only files (extra)
-/a => copy attributes (extra)
+/o => overwrite target-file
+/o:r => overwrite read-only files, original attributes restored (extra)
+/a => copy attributes, modification date/-time and last access date too (extra)
 /r => delete read-only folders/ files (extra)
 /a:[-]adrsh => selected attributes [not]only
 
