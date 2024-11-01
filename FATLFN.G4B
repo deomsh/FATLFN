@@ -5,7 +5,7 @@
 #-#+ Use: FATLFN.G4B mkdir FILE
 #-#+ Use: FATLFN.G4B mkfile size=N FILE
 #-#+ Use: FATLFN.G4B ren FILE1 [PATH]file2
-#-#+ Use: FATLFN.G4B copy [/o:r] [/a] FILE1 DEVICE2/PATH2/[file2]
+#-#+ Use: FATLFN.G4B copy [/o[:r]] [/a] FILE1 DEVICE2/PATH2/[file2]
 #-#+ Use: FATLFN.G4B del [/r] FILE
 #-#+ Use: FATLFN.G4B dir [/a[-]adrsh] [DEVICE]/[PATH[/]]
 #-#+ Use: FATLFN.G4B dirx [/a[-]adrsh] [DEVICE]/[PATH[/]]
@@ -1018,7 +1018,7 @@ if "%~1"=="smallhelp" && echo Use 1: FATLFN.G4B mkfile size=N FILE
 if "%~1"=="smallhelp" && echo Use 2: FATLFN.G4B mkdir FILE
 if "%~1"=="smallhelp" && echo Use 3: FATLFN.G4B ren FILE1 [PATH2/]file2
 if "%~1"=="smallhelp" && echo Use 4: FATLFN.G4B del [/r] FILE
-if "%~1"=="smallhelp" && echo Use 5: FATLFN.G4B copy [/o:r] [/a] FILE1 [DEVICE2]/PATH2/[file2]
+if "%~1"=="smallhelp" && echo Use 5: FATLFN.G4B copy [/o[:r]] [/a] FILE1 [DEVICE2]/PATH2/[file2]
 if "%~1"=="smallhelp" && echo Use 6: FATLFN.G4B dir [/a[-]adrsh] [DEVICE]/[PATH[/]]
 if "%~1"=="smallhelp" && echo Use 7: FATLFN.G4B dirx [/a[-]adrsh] [DEVICE]/[PATH[/]]
 if "%~1"=="smallhelp" && echo Use 8: FATLFN.G4B dellfn FILE
