@@ -76,7 +76,7 @@ More information and download: https://github.com/deomsh/ATTRIBFT.LLL
 Version 0.2  
 First published version
 
-### FATLFN.LLL v0.2 (20241023)
+### FATLFN.LLL v0.2 (20241101)
 
 This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz)  
