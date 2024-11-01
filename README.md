@@ -100,6 +100,6 @@ Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':
 
 ![FATLFN G4B all examples](https://github.com/user-attachments/assets/995832fa-c03b-4c70-a3d6-6135e47070a5)
 
-Use of switches, file attributes showed with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
+Use of switches '/o', '/o:r', '/a' for copy and '/r' for del. File-attributes, Modification Date/Time, Last Access Date and Creation Date/Time echood as 'Attrib', 'Mod', 'Acc' and 'Wri' with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
 
 ![FATLFN G4B examples with switches (with ATTRIBFT G4B attriballecho)](https://github.com/user-attachments/assets/182c05c1-d20c-4793-a59b-b30669ffcd60)
