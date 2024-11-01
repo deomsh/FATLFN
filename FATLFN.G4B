@@ -1026,7 +1026,7 @@ if "%~1"=="smallhelp" && echo Use 9: FATLFN.G4B /? && goto :eof
 setlocal
 pager status > nul ;; set /a pagerst=%@retval% > nul
 pager on
-echo FATLFN.G4B v0.2 (20241030), by deomsh
+echo FATLFN.G4B v0.2 (20241101), by deomsh
 echo Function: to make Grubutil 'fat' compatible with Long File Names
 echo Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
 echo Use 1: FATLFN.G4B mkdir FILE
@@ -1042,9 +1042,9 @@ echo Mandatory Arguments:
 echo FILE (contains DEVICE/PATH/NAME.EXT), without DEVICE/ PATH on ROOT: '/'
 echo Function mkfile needs size=N => N is number of bytes, takes Nk/ Nm/ Ng bytes && echo
 echo Optional Arguments:
-echo /o => overwrite
-echo /o:r => overwrite read-only files (extra)
-echo /a => copy attributes (extra)
+echo /o => overwrite target-file
+echo /o:r => overwrite read-only files, original attributes restored (extra)
+echo /a => copy attributes, modification date/-time and last access date too (extra)
 echo /r => delete read-only folders/ files (extra)
 echo /a:[-]adrsh => selected attributes [not]only && echo
 echo Remarks:
@@ -1069,7 +1069,7 @@ echo Grub4Dos 0.4.6a, Grubutil FAT >=15/02/2015
 echo $[] On FAT32 partition >= 4GB use Grubutil FAT from 2023, april or later
 echo Grub4dos for UEFI: compatible, but soon 'Out of malloc memory' errors
 echo Found not compatible with Grub4Dos 0.4.5b / Grub4Dos 0.4.5c
-echo Needed: Loosely Linked Library ATTRIBFT.LLL (>=v0.8.1) - must be in same folder
+echo Needed: Loosely Linked Library ATTRIBFT.LLL (>=v0.9) - must be in same folder
 echo $[] as FATLFN.G4B, or already loaded with insmod (NO change of name allowed) && echo
 echo Examples:
 echo -e FATLFN.G4B mkdir (hd0,0)/Directory \x3B\x3B echo \x25result\x25
