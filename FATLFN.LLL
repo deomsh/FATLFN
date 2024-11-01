@@ -5,10 +5,10 @@
 #-#+ Use: FATLFN.LLL mkdir FILE
 #-#+ Use: FATLFN.LLL mkfile size=N FILE
 #-#+ Use: FATLFN.LLL ren FILE1 [PATH]file2
-#-#+ Use: FATLFN.LLL copy [/o:r] [/a] FILE1 DEVICE2/PATH2/[file2]
+#-#+ Use: FATLFN.LLL copy [/o[:r]] [/a] FILE1 DEVICE2/PATH2/[file2]
 #-#+ Use: FATLFN.LLL del [/r] FILE
-#-#+ Use: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]]
-#-#+ Use: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]]
+#-#+ Use: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]] ["< nul"]
+#-#+ Use: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]] ["< nul"]
 #NOTANYMORE##-# Use: FATLFN.LLL <makelfn> FILE lfn
 #-# Use: FATLFN.LLL dellfn FILE
 #NOT#-## Use: FATLFN.LLL mkfs [/A:sectorsize] DEVICE
@@ -1029,9 +1029,9 @@ if "%~1"=="smallhelp" && echo Use 1: FATLFN.LLL mkfile size=N FILE
 if "%~1"=="smallhelp" && echo Use 2: FATLFN.LLL mkdir FILE
 if "%~1"=="smallhelp" && echo Use 3: FATLFN.LLL ren FILE1 [PATH2/]file2
 if "%~1"=="smallhelp" && echo Use 4: FATLFN.LLL del [/r] FILE
-if "%~1"=="smallhelp" && echo Use 5: FATLFN.LLL copy [/o:r] [/a] FILE1 [DEVICE2]/PATH2/[file2]
-if "%~1"=="smallhelp" && echo Use 6: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]]
-if "%~1"=="smallhelp" && echo Use 7: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]]
+if "%~1"=="smallhelp" && echo Use 5: FATLFN.LLL copy [/o[:r]] [/a] FILE1 [DEVICE2]/PATH2/[file2]
+if "%~1"=="smallhelp" && echo Use 6: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]] ["> nul"]
+if "%~1"=="smallhelp" && echo Use 7: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]] ["> nul"]
 if "%~1"=="smallhelp" && echo Use 8: FATLFN.LLL dellfn FILE
 if "%~1"=="smallhelp" && echo Use 9: FATLFN.LLL help
 if "%~1"=="smallhelp" && echo Dependency: ATTRIBFT.LLL && goto :eof
@@ -1046,8 +1046,8 @@ echo Use 2: FATLFN.LLL mkfile size=N FILE
 echo Use 3: FATLFN.LLL copy [/o[:r]] [/a] FILE1 DEVICE2/PATH2/[file2]
 echo Use 4: FATLFN.LLL ren FILE1 [PATH2/]file2
 echo Use 5: FATLFN.LLL del [/r] FILE
-echo Use 6: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]]
-echo Use 7: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]]
+echo Use 6: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]] ["> nul"]
+echo Use 7: FATLFN.LLL dirx [/a[-]adrsh] [DEVICE]/[PATH[/]] ["> nul"]
 echo Use 8: FATLFN.LLL dellfn FILE
 echo Use 9: FATLFN.LLL help (this screen) && echo
 echo Mandatory Arguments:
