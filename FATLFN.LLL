@@ -986,13 +986,13 @@ if %h%==h && set h=+h ! set h=-h
 if %a%==a && set a=+a ! set a=-a
 set "attrib=%r%%%s%%%h%%%a%"
 ATTRIBFT.LLL setattrib input="%output2%" "%~2" "%attrib%" &; if exist result && set result= && set output= ! endlocal && set "message=Failed to set attribute(s) %attrib% on "%~2"" && goto :eof
-ATTRIBFT.LLL getmoddate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
-ATTRIBFT.LLL setmoddate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
-ATTRIBFT.LLL getmodtime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
-ATTRIBFT.LLL setmodtime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
+ATTRIBFT.LLL getdate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
+ATTRIBFT.LLL setdate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
+ATTRIBFT.LLL gettime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
+ATTRIBFT.LLL settime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
 ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
-ATTRIBFT.LLL setacctime input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
-ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
+ATTRIBFT.LLL setaccdate input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
+ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get NT-casebyte from "%~1"" && goto :eof
 if not %casebyte%==0x8 if not %casebyte%==0x10 if not %casebyte%==0x18 |; ATTRIBFT.LLL setntcasebyte input="%output2%" "%~2" "%casebyte%" &; if exist result && set result= ! endlocal && set "message=Failed to set NT-casebyte '%casebyte%' on "%~2"" && goto :eof
 endlocal && set "message=%message%"
 goto :eof
