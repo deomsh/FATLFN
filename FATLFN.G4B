@@ -542,7 +542,8 @@ if %success%==Y && set result=1 && if not %MAKELFN%==N &; if not exist name2 && 
 if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %SFN2%==N && if not %LFN2%==Y && if exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
 ## Make LFN if source filename1 on command-line is LFN AND target filename is empty AND no LFN found on source (i.e. non-fat)
 if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %LFN1%==Y && if not exist name2 && if exist lfnfile1 && if not "%lfnfile1%"=="%lfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile1%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
-if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %CASE2%==Y && if exist name2 && if exist lfnfile && if not exist lfnfile2 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
+## Make LFN if target filename is SFN with case only
+if %success%==Y && set result=1 && if not %MAKELFN%==N &; if %CASE2%==Y && if exist name2 && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! echo $[0x00]"$[0x07]%message%$[0x00]" && set message= && set output=
 if not exist result && set result=0 ! set result=1
 endlocal && set result=%result%
 goto :eov
