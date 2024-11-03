@@ -20,24 +20,22 @@ Function mkfile needs size=N => N is number of bytes, takes Nk/ Nm/ Ng bytes
 Optional Arguments:
 /o => overwrite target-file
 /o:r => overwrite read-only files, original attributes restored (extra)
-/a => copy attributes, modification date and modification time too (extra)
+/a => copy attributes, NT-casebyte included (extra)
 /r => delete read-only folders/ files (extra)
 /a:[-]adrsh => selected attributes [not]only
 
 Remarks:
 ren => if PATH1 and PATH2 are equal (on same DEVICE only)
- If Short File Name is renamed to Long File Name, Long File Name is added
-  (if none exist)
- If Long File Name is renamed to associated Short File Name, Long File Name is
-  removed (use <dirx> before to check)
+ If Short File Name is renamed to Long File Name, Long File Name is added (if none exist)
+ If Long File Name is renamed to associated Short File Name, Long File Name is removed (use <dirx> before to check)
  If 8+3 Short File Name, not fully highcase (=LFN) is renamed to same name in
   HIGHCASE, 8+3 LFN is removed - and the other way round 8+3 LFN is added
 ren => if PATH1 and PATH2 not equal 8+3 Short File Name is moved on same DEVICE
  If source and target share SAME 8+3 Short File Name, Long File Name moved too
     
 copy => with /o:r ALL found attributes of read-only file on target got restored
- With /a ALL attributes found on source-file will be set on target-file after
-  copying (FAT-source only!)
+ With /a ALL attributes found on FAT source-file will be set on target-file after copying
+ Modification Date and -Time are always copied from FAT source-file
     
 dellfn => if Short File Name is in FILE, Long File Name is searched to delete
  All orphaned Long File Name in directory are deleted too (case-insensitive!)
@@ -76,7 +74,7 @@ More information and download: https://github.com/deomsh/ATTRIBFT.LLL
 Version 0.2  
 First published version
 
-### FATLFN.LLL v0.2 (20241101)
+### FATLFN.LLL v0.2 (20241103)
 
 This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz)  
@@ -100,6 +98,7 @@ Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':
 
 ![FATLFN G4B all examples](https://github.com/user-attachments/assets/995832fa-c03b-4c70-a3d6-6135e47070a5)
 
-Use of switches '/o', '/o:r', '/a' for copy and '/r' for del. File-attributes, Modification Date/Time, Last Access Date and Creation Date/Time echood as 'Attrib', 'Mod', 'Acc' and 'Wri' with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
+Use of switch '/o', compared with 'fat copy' and extra switches '/o:r', '/a' for copy and '/r' for del. File-attributes, Modification Date/Time, Last Access Date and Creation Date/Time echood as 'Attrib', 'Mod', 'Acc' and 'Wri' with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
 
-![FATLFN G4B examples with switches (with ATTRIBFT G4B attriballecho)](https://github.com/user-attachments/assets/182c05c1-d20c-4793-a59b-b30669ffcd60)
+![FATLFN G4B examples with switches compared with fat copy (with ATTRIBFT G4B attriballecho) v0 2(2)](https://github.com/user-attachments/assets/cf77e5de-f1c4-4c61-a243-41dffca12607)
+
