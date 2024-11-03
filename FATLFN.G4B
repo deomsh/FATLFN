@@ -1,5 +1,5 @@
 !BAT
-#-#+ FATLFN.G4B v0.2 (20241101), by deomsh
+#-#+ FATLFN.G4B v0.2 (20241103), by deomsh
 #-#+ Function: Loosely Linked Library to make Grubutil FAT compatible with Long File Names
 #-#+ Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
 #-#+ Use: FATLFN.G4B mkdir FILE
@@ -980,8 +980,8 @@ ATTRIBFT.LLL getdate input="%output1%" "%~1" &; if exist result && set moddate=%
 ATTRIBFT.LLL setdate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
 ATTRIBFT.LLL gettime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
 ATTRIBFT.LLL settime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
-ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
-ATTRIBFT.LLL setaccdate input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
+#NOTANYMORE#ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
+#NOTANYMORE#ATTRIBFT.LLL setaccdate input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
 ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get NT-casebyte from "%~1"" && goto :eof
 if not %casebyte%==0x8 if not %casebyte%==0x10 if not %casebyte%==0x18 |; ATTRIBFT.LLL setntcasebyte input="%output2%" "%~2" "%casebyte%" &; if exist result && set result= ! endlocal && set "message=Failed to set NT-casebyte '%casebyte%' on "%~2"" && goto :eof
 endlocal && set "message=%message%"
@@ -1027,7 +1027,7 @@ if "%~1"=="smallhelp" && echo Use 9: FATLFN.G4B /? && goto :eof
 setlocal
 pager status > nul ;; set /a pagerst=%@retval% > nul
 pager on
-echo FATLFN.G4B v0.2 (20241101), by deomsh
+echo FATLFN.G4B v0.2 (20241103), by deomsh
 echo Function: to make Grubutil 'fat' compatible with Long File Names
 echo Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
 echo Use 1: FATLFN.G4B mkdir FILE
@@ -1045,7 +1045,7 @@ echo Function mkfile needs size=N => N is number of bytes, takes Nk/ Nm/ Ng byte
 echo Optional Arguments:
 echo /o => overwrite target-file
 echo /o:r => overwrite read-only files, original attributes restored (extra)
-echo /a => copy attributes, modification date/-time and last access date too (extra)
+echo /a => copy attributes, modification date and modification time too (extra)
 echo /r => delete read-only folders/ files (extra)
 echo /a:[-]adrsh => selected attributes [not]only && echo
 echo Remarks:
