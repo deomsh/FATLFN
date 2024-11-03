@@ -1,4 +1,4 @@
-## FATLFN.G4B v0.2 (20241101)
+## FATLFN.G4B v0.2 (20241103)
 
 <pre><code>Function: to make Grubutil 'fat' compatible with Long File Names
 Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dellfn
