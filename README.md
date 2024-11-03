@@ -101,4 +101,4 @@ Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':
 Use of switch '/o', compared with 'fat copy' and extra switches '/o:r', '/a' for copy and '/r' for del. File-attributes, Modification Date/Time, Last Access Date and Creation Date/Time echood as 'Attrib', 'Mod', 'Acc' and 'Wri' with ATTRIBFT.G4B (command-line front-end of ATTRIBFT.LLL):
 
 ![FATLFN G4B examples with switches compared with fat copy (with ATTRIBFT G4B attriballecho) v0 2(2)](https://github.com/user-attachments/assets/cf77e5de-f1c4-4c61-a243-41dffca12607)
-
+![FATLFN G4B examples with switches compared with fat copy (with ATTRIBFT G4B attriballecho) v0 2(2) II](https://github.com/user-attachments/assets/71bcc4ae-8025-4bf7-b3c9-c765abca7032)
