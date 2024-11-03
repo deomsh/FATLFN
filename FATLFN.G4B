@@ -519,8 +519,12 @@ if %success%==N && endlocal && set result=0 && goto :eov
 :makelfncopy
 ## Set sfnfile2 if not exist to sfnfile1
 if not exist sfnfile2 && set sfnfile2=%sfnfile1%
-## Write attributes on fat-target if got from fat-source with '/a'
+## Always copy Modification Date/ -Time from FAT-source
+if %success%==Y && if /i %filesysS:~0,3%==fat &; setlocal && set result= && ATTRIBFT.LLL getdate input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set result= && ATTRIBFT.LLL setdate input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%result%" ! set "message=Failed to get modication date from "%device1%%%sfnpath1%%%sfnfile1%"" &; if not exist result && endlocal && echo "%message%" ! endlocal
+if %success%==Y && if /i %filesysS:~0,3%==fat &; setlocal && set result= && ATTRIBFT.LLL gettime input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set result= && ATTRIBFT.LLL settime input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%result%" ! set "message=Failed to get modication time from "%device1%%%sfnpath1%%%sfnfile1%"" &; if not exist result && endlocal && echo "%message%" ! endlocal
+## Write attributes back on fat-target with '/o:r'
 if %success%==Y && if not exist a && if exist attrib && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%attrib%" &; if exist result && set result= && set attrib= && set output= ! echo Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile2%" && set attrib= && set message= && set output=
+## Write attributes from fat-source to target with '/a'
 if %a%==/a && if /i %filesysS:~0,3%==fat &; set attrib= && call :setsourceattributes "%device1%%%sfnpath1%%%sfnfile1%" "%device2%%%sfnpath2%%%sfnfile2%" &; if exist message && echo %message% && set message=
 ## Check if LFN of file2 exist (if sfnfile2 exists)
 if not exist name2 && if exist %device2%%%sfnpath2%%%sfnfile2% && set result= && set file2=1 &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
@@ -976,10 +980,10 @@ if %h%==h && set h=+h ! set h=-h
 if %a%==a && set a=+a ! set a=-a
 set "attrib=%r%%%s%%%h%%%a%"
 ATTRIBFT.LLL setattrib input="%output2%" "%~2" "%attrib%" &; if exist result && set result= && set output= ! endlocal && set "message=Failed to set attribute(s) %attrib% on "%~2"" && goto :eof
-ATTRIBFT.LLL getdate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
-ATTRIBFT.LLL setdate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
-ATTRIBFT.LLL gettime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
-ATTRIBFT.LLL settime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
+#ALWAYS#ATTRIBFT.LLL getdate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
+#ALWAYS#ATTRIBFT.LLL setdate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
+#ALWAYS#ATTRIBFT.LLL gettime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
+#ALWAYS#ATTRIBFT.LLL settime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
 #NOTANYMORE#ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
 #NOTANYMORE#ATTRIBFT.LLL setaccdate input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
 ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get NT-casebyte from "%~1"" && goto :eof
@@ -1045,7 +1049,7 @@ echo Function mkfile needs size=N => N is number of bytes, takes Nk/ Nm/ Ng byte
 echo Optional Arguments:
 echo /o => overwrite target-file
 echo /o:r => overwrite read-only files, original attributes restored (extra)
-echo /a => copy attributes, modification date and modification time too (extra)
+echo /a => copy attributes, NT-casebyte included (extra)
 echo /r => delete read-only folders/ files (extra)
 echo /a:[-]adrsh => selected attributes [not]only && echo
 echo Remarks:
@@ -1059,8 +1063,8 @@ echo $[]  HIGHCASE, 8+3 LFN is removed - and the other way round 8+3 LFN is adde
 echo ren => if PATH1 and PATH2 not equal 8+3 Short File Name is moved on same DEVICE
 echo $[] If source and target share SAME 8+3 Short File Name, Long File Name moved too && echo
 echo copy => with /o:r ALL found attributes of read-only file on target got restored
-echo $[] With /a ALL attributes found on source-file will be set on target-file after
-echo $[]  copying (FAT-source only!) && echo
+echo $[] With /a ALL attributes found on FAT source-file will be set on target-file after
+echo $[]  copying (Modification Date and -Time are always copied from FAT source-file) && echo
 echo dellfn => if Short File Name is in FILE, Long File Name is searched to delete
 echo $[] All orphaned Long File Name in directory are deleted too (case-insensitive!) && echo
 echo Long File Name with spaces or '=', use double qoutes: "FILE" or '\ ' or '\='
