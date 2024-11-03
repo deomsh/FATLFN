@@ -109,7 +109,7 @@ call :checksfn "%name%%%ext%" &; if not %SFN%==N && set sfnfile=%name%%%ext%
 if not exist sfnfile && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && echo Abort: "%device%%%path%%%name%%%ext%" exist && endlocal && set result=0 && goto :eov ! if exist message && set message= && set output=
 if exist sfnfile && if exist %device%%%sfnpath%%%sfnfile% && echo Abort: "%sfnfile%" is an existing file && endlocal && set result=0 && goto :eov
 if exist sfnfile && fat dir %device%%%sfnpath%%%sfnfile% > nul && echo Abort: "%sfnfile%" is an existing directory && endlocal && set result=0 && goto :eov
-if not exist sfnfile && if %SFN%==N && call :makesfnfile input="%output1%" "%device%%%sfnpath%%%name%%%ext%" "%mode%" &; if not exist sfnfile && endlocal && echo Abort: can not make Short File Name && set result=0 && goto :eov
+if not exist sfnfile && if %SFN%==N && call :makesfnfile "%device%%%sfnpath%%%name%%%ext%" "%mode%" &; if not exist sfnfile && endlocal && echo Abort: can not make Short File Name && set result=0 && goto :eov
 if exist sfnfile && fat mkfile size=%size% %device%%%sfnpath%%%sfnfile% && set result=1
 if %CASE%==Y && set SFN=N
 if %SFN%==N && if %result%==1 && set result= && ATTRIBFT.LLL makelfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" "%sfnfile%"
