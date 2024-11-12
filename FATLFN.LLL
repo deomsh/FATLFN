@@ -670,7 +670,6 @@ goto :eov
 ::
 :fatdirx
 setlocal && set * && set "path=%path%" && set device=%device% && set sfnpath=%sfnpath% && set pagerst=%pagerst% && set "name=%name%" && set "ext=%ext%" && set mode=%mode%
-#ORG#setlocal && set * && set "path=%path%" && set device=%device% && set sfnpath=%sfnpath% && set pagerst=%pagerst% && set "NULL=%NULL%"
 set ARG1=%~1 && set ARG2=%~2
 if /i %ARG2:~0,5%==dir:[ && set ARG2= && shift
 if /i %ARG1%==FAT && set ARG1= && shift
@@ -698,7 +697,7 @@ if not exist DATE if not exist TIME |; if not exist DIRNAME && set FILEEXT=%ARG3
 if exist FILENAME && set FILENAME=%FILENAME% &; if not %@retval%<=8 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirxend
 if exist FILEEXT && set FILEEXT=%FILEEXT% &; if not %@retval%<=4 && set temprslt=1 && set /a error=%error%+1 > nul && goto :fatdirxend
 ## first to attempt after restart give no good call Fn.4 with echo's longer than a line
-if /i "%mode%"=="dirx" &; if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! set "output=%outputOK%" && if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
+if /i "%mode%"=="dirx" &; if exist DIRNAME && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%DIRNAME%%%DIREXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 if exist FILESIZE && if /i %ARG5%==KB && set FILESIZE=%FILESIZE%\x20KB && shift
 if /i "%mode%"=="dirx" &; if exist FILENAME && if exist FILESIZE && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%/%FILENAME%%%FILEEXT%" &; if exist result && set "lfnfile=%result%" && set result= && set output= ! if "%message:~0,6%"=="LFN of" && set message= && set output= ! set output=
 if exist name &; if exist lfnfile && set /u "LFN=%lfnfile%" ! set LFN=N
