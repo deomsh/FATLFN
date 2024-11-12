@@ -103,6 +103,7 @@ Exception for functions \<dir> and \<dirx> without "\> nul" at the end: normal o
 With "\> nul"  after FILE:  
 \<dir> returns 'result=0' if directory is empty, otherwise count of Directory-entries  
 \<dirx> returns 'result=0' if directory is empty, otherwise count of Long File Names in Directory  
+\<dira> returns 'result=0' if directory is empty, otherwise count of Short File Names in Directory  
 If a script uses FATLFN.LLL, 'FAT' and 'ATTRIBFT.LLL' must have been loaded with insmod before use  
 Script must unload 'FAT' and 'ATTRIBFT.LLL' if desired  
 After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !  
