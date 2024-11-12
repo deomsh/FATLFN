@@ -84,7 +84,7 @@ More information and download: https://github.com/deomsh/ATTRIBFT.LLL
 
 ### HISTORY
 Version 0.3  
-Help: adjustments and new Examples
+Help: adjustments and new Examples  
 New: ls-style in functions 'dirx' and 'dira'  
 New: function 'dira'  
 New: check if grub4dos version is >=20170505  
