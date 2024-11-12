@@ -134,11 +134,11 @@ ls-style in function 'dirx' and new function 'dira':
 
 ### ADDENDUM   
 Imported functions from ATTRIBFT.LLL:  
-getsfnpath, getsfn, getlfn, makelfn, dellfn  
-isreadonly, getattrib, setattrib  
-getntcasebyte, setntcasebyte  
-getdate, setdate, gettime, settime, getdatetimeattriball  
-calclfnhash  
+getsfnpath, getsfn, getlfn, makelfn, dellfn.  
+isreadonly, getattrib, setattrib.  
+getntcasebyte, setntcasebyte.  
+getdate, setdate, gettime, settime, getdatetimeattriball.  
+calclfnhash.  
 
 Exported functions by FATLFN.LLL:  
 mkfile, mkdir, ren, del, copy, dir.  
