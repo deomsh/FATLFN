@@ -88,7 +88,7 @@ Help: adjustments and new Examples
 New: ls-style in functions 'dirx' and 'dira'  
 New: function 'dira'  
 New: check if grub4dos version is >=20170505  
-Bugfix: if 'name' or 'extension' is '!'  
+Bugfix: if 'name' or 'extension' is '!' no echo with 'dir-x|a]'  
 Bugfix: better compatibility is full grub4dos scriptline is in 'path' or 'filename'  
 
 Version 0.2  
