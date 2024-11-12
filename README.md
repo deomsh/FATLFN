@@ -94,7 +94,7 @@ Bugfix: better compatibility is full grub4dos scriptline is in 'path' or 'filena
 Version 0.2  
 First published version
 
-### FATLFN.LLL v0.2 (20241103)
+### FATLFN.LLL v0.3 (20241112)
 
 This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz)  
