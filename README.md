@@ -40,7 +40,7 @@ copy => with /o:r ALL found attributes of read-only file on target got restored
 Function 'dir' always whole directory, 'dirx' and 'dira' takes 'file', 'ls'-style
 dir => same output as 'fat dir' except Long File Names only (order bit different)
 dirx => Short File Names, filesize and associated Long File Names
-dira => Short File Names, Attributes, Modification Date and Time
+dira => Short File Names, Attributes, Modification Date and Time,
  Creation Date and Time (WRI) and Last Access Date (ACC) - without filesize
 
 dellfn => if Short File Name is in FILE, Long File Name is searched to delete
