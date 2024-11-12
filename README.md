@@ -62,7 +62,8 @@ FATLFN.G4B mkdir (hd0,0)/Directory\\ 2 ;; set result
 FATLFN.G4B mkfile size=1k (hd0,0)/Directory/Long\ File\ Name
 FATLFN.G4B mkfile size=1k "(hd0,0)/Directory/Long File Name 2"
 FATLFN.G4B dir (hd0,0)/Directory
-FATLFN.G4B dirx (hd0,0)/Directory
+FATLFN.G4B dirx "(hd0,0)/Directory/Long F"
+FATLFN.G4B dira (hd0,0)/Directory/
 FATLFN.G4B ren "(hd0,0)/Directory/Long File Name 2" "Directory/Longer File Name"
 FATLFN.G4B ren "(hd0,0)/Directory/Long File Name" /Directory/LONGFI~1
 FATLFN.G4B ren "(hd0,0)/Directory/Longer File Name" "Directory 2/LONGER~1"
