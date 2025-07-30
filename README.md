@@ -111,8 +111,8 @@ Use 'FATLFN.LLL help' for help (most of the time identical to command-line versi
 
 ### HISTORY
 Version 0.3  
-Function 'dira': with '> nul' on command-line 'result' is count of Short File Names
-Further same as FATLFN.G4B   
+Function 'dira': with '> nul' on command-line 'result' is count of Short File Names  
+Further same as FATLFN.G4B  
 
 Version 0.2  
 First published version
