@@ -1,4 +1,4 @@
-## FATLFN.G4B v0.3 (20241112)
+## FATLFN.G4B v0.3.1 (20250801)
 
 <pre><code>Function: to make Grubutil 'fat' compatible with Long File Names
 Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dira, dellfn
@@ -82,7 +82,10 @@ FATLFN.G4B del /r (rd)/IO.SYS</code></pre>
 Concept of 'Loosely Linked Library' is an idea of Wonko the Sane (Jaclaz)  
 More information and download: https://github.com/deomsh/ATTRIBFT.LLL  
 
-### HISTORY
+### HISTORY of FATLFN.G4B
+Version 0.3.1  
+NEW: FAT and ATTRIBFT.LLL not unloaded afterwards if already loaded with insmod  
+
 Version 0.3  
 Help: adjustments and new Examples  
 New: ls-style in functions 'dirx' and 'dira'  
@@ -94,7 +97,7 @@ Bugfix: better compatibility if full grub4dos scriptline is in 'path' or 'filena
 Version 0.2  
 First published version
 
-### FATLFN.LLL v0.3 (20241112)
+### FATLFN.LLL v0.3.1 (20250801)
 
 This is the Loosely Linked Library version of command-line script 'FATLFN.G4B'  
 The concept of a Loosely Linked Library is an idea of Wonko the Sane (Jaclaz)  
@@ -110,6 +113,11 @@ After use of 'FATLFN.LLL' status is always: 'debug 1' AND 'debug msg=0' !
 Use 'FATLFN.LLL help' for help (most of the time identical to command-line version)  
 
 ### HISTORY
+Version 0.3.1  
+NEW: FAT and ATTRIBFT.LLL not unloaded afterwards if already loaded with insmod  
+BUGFIX: result/ message not returned with function 'copy'  
+BUGFIX: function 'dira' not working  
+
 Version 0.3  
 Function 'dira': with '> nul' on command-line 'result' is count of Short File Names  
 Further same as FATLFN.G4B  
@@ -118,6 +126,9 @@ Version 0.2
 First published version
 
 ### SCREENSHOTS
+![TEXTSTAT G4B FATLFN G4B](https://github.com/user-attachments/assets/06178f30-218e-4205-bd6e-456a27925299)
+
+![TEXTSTAT G4B FATLFN LLL](https://github.com/user-attachments/assets/56d021b7-4dd8-4b95-b1d9-02be2a929399)
 
 Contains all Examples from the 'help' of command-line script 'FATLFN.G4B':  
 
