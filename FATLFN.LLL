@@ -1,5 +1,5 @@
 !BAT
-#-#+ FATLFN.LLL v0.3 (20241112), by deomsh
+#-#+ FATLFN.LLL v0.3.1 (20250801), by deomsh
 #-#+ Function: to make Grubutil FAT compatible with Long File Names
 #-#+ Available functions: mkfile, mkdir, ren, del, copy, dir. Extra: dirx, dira dellfn
 #-#+ Use: FATLFN.LLL mkdir FILE
@@ -9,10 +9,7 @@
 #-#+ Use: FATLFN.LLL del [/r] FILE
 #-#+ Use: FATLFN.LLL dir [/a[-]adrsh] [DEVICE]/[PATH[/]] ["< nul"]
 #-#+ Use: FATLFN.LLL dirx|dira [/a[-]adrsh] [DEVICE]/[PATH/][f[ile]]
-#NOTANYMORE##-# Use: FATLFN.LLL <makelfn> FILE lfn
 #-# Use: FATLFN.LLL dellfn FILE
-#NOT#-## Use: FATLFN.LLL mkfs [/A:sectorsize] DEVICE
-#NOT#-## Use: FATLFN.LLL info DEVICE
 #-#+ Use: FATLFN.LLL for some help (more with 'help' - without quotes)
 #-#+ Mandatory Arguments: FILE, without DEVICE/ PATH on ROOT: '/'. Except <copy>: source FAT only
 #-#+ Optional Arguments: size=N => number of bytes, takes Nk/ Nm/ Ng bytes; /o => overwrite; /o:r => overwrite read-only files; /a => copy attributes; /r => delete read-only folders/ files; /a:[-]adrsh => selected attributes [not]only
@@ -21,14 +18,16 @@
 #-#+ Remark <copy>: with /o:r ALL found attributes on read-only target file will be restored after copying. With /a ALL attributes found on source file will be set on target-file after copying (FAT-source only!)
 #-#+ Remark <dirx>: shows Short File Name, filesize and associated Long File Name - ls-style
 #-#+ Remark <dira>: shows Short File Name, Attributes, Date and Time, Creation Date and Time, Last Access Date - ls-style
-#NOT#-## Remark <makelfn>: Short File Name in FILE must exist, NO check if Short File Name is subset of added Long File Name!
 if "%~1"=="" && echo && call :help "smallhelp" &; echo && goto :eof
 if /i "%~1"=="help" && goto :help
-if not /i "%~1"=="mkdir" && if not /i "%~1"=="copy" && if not /i "%~1"=="ren" && if not /i "%~1"=="del" && if not /i "%~1"=="mkfile" && if not /i "%~1"=="dir" && if not /i "%~1"=="dirx" && if not /i "%~1"=="dellfn" && echo && call :help "smallhelp" &; echo && goto :eof
+if not /i "%~1"=="mkdir" && if not /i "%~1"=="copy" && if not /i "%~1"=="ren" && if not /i "%~1"=="del" && if not /i "%~1"=="mkfile" && if not /i "%~1"=="dir" && if not /i "%~1"=="dirx" && if not /i "%~1"=="dira" && if not /i "%~1"=="dellfn" && echo && call :help "smallhelp" &; echo && goto :eof
 debug 1
 debug msg=0
+delmod -l fat > nul && set INSMOD=fat ! set INSMOD=INSMOD &; delmod -l ATTRIBFT.LLL > nul &; if %INSMOD%==fat && set INSMOD=%INSMOD%;ATTRIBFT.LLL ! set INSMOD=ATTRIBFT.LLL
 delmod -l fat > nul || insmod %~dp0fat > nul || insmod /fat > nul || insmod (bd)/boot/grub/fat > nul || insmod (bd)/fat > nul || insmod (bd)/grub/fat > nul || insmod (bd)/g4dll/fat > nul || insmod %@root%/fat > nul || echo -e \x20Grubutil FAT needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
 delmod -l ATTRIBFT.LLL > nul || insmod %~dp0ATTRIBFT.LLL > nul || insmod /ATTRIBFT.LLL > nul || insmod (bd)/boot/grub/ATTRIBFT.LLL > nul || insmod (bd)/ATTRIBFT.LLL > nul || insmod (bd)/grub/ATTRIBFT.LLL > nul || insmod (bd)/g4dll/ATTRIBFT.LLL > nul || insmod %@root%/ATTRIBFT.LLL > nul || echo -e \x20Loosely Linked Library ATTRIBFT.LLL needed in (bd), (bd)/boot/grub, (bd)/grub, (bd)/g4dll or current or root directory" && goto :eov
+if exist result && set result=
+if exist message && set message=
 errorcheck off
 goto :%~1
 goto :eov
@@ -41,14 +40,10 @@ set mode=dir
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~2"" && set result= && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path=%~p2" &; if "%path%"=="/" && set "sfnpath=/"
+echo -e "%~p2" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path%"" && endlocal && set result= && goto :eov ! if "%path:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path%"" && endlocal && set result= && goto :eov
 if not exist sfnpath && call Fn.11 "%path%" "/ " && set "message=Abort: no starting spaces allowed in directories in "%path%"" && endlocal && set result= && goto :eov
-set "name=%~n2" &; if not exist name && set "message=Abort: file name is missing" && endlocal && set result= && goto :eov
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set "ext=%~x2" &; if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
-echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
+echo -e "%~n2" | set name= &; set "name=%name:~1,-1%" &; if not exist name && set "message=Abort: file name is missing" && endlocal && set result=0 && goto :eov ! if "%name:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x2" | set ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :mkdirnospacedotloop
 ## Starting spaces in name not allowed
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :mkdirnospacedotloop
@@ -86,15 +81,10 @@ checkrange 0:0xFFFFFFFF calc %size% || endlocal && set "message=Abort: argument 
 call :checkforbiddenchars "%~4" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~4"" && set result= && goto :eov
 set device=%~d4 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path=%~p4" &; if "%path%"=="/" && set "sfnpath=/"
+echo -e "%~p4" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path%"" && endlocal && set result= && goto :eov
 if not exist sfnpath && call Fn.11 "%path%" "/ " && endlocal && set "message=Abort: no starting spaces allowed in directories in "%path%"" && set result= && goto :eov
-set "name=%~n4" &; if not exist name && endlocal && set "message=Abort: name-part in "%~4" must exist" && set result= && goto :eov
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set "ext=%~x4" &; if "%ext%"=="." && set ext=
-if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
-echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
+echo -e "%~n4" | set name= &; set "name=%name:~1,-1%" &; if not exist name && set "message=Abort: file name is missing" && endlocal && set result=0 && goto :eov ! if "%name:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x4" | set ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :mkfilenospacedotloop
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :mkfilenospacedotloop
 if not exist ext && call Fn.11 "%name:~-1,1%" " " && set "name=%name:~0,-1%" && goto :mkfilenospacedotloop
@@ -122,7 +112,7 @@ goto :eov
 :checkforbiddenchars
 setlocal && set *
 set forbiden=Y &; call Fn.11 "%~1" "\x22" || set forbiden=
-#TEST# call Fn.11 has 'if'-properties with 'call Fn.11 "%var%" "chars" && cmdA #! cmdB'
+## call Fn.11 has 'if'-properties with 'call Fn.11 "%var%" "chars" && cmdA #! cmdB'
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "%" || set forbiden=
 if not %forbiden%==Y && call Fn.11 "%~1" "\x01" && set forbiden=Y
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "$[0x" || call Fn.11 "%~1" "]" || set forbiden=
@@ -135,16 +125,13 @@ if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "\n" || set forbiden=
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "\r" || set forbiden=
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "\t" || set forbiden=
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "\v" || set forbiden=
-#NOTPOSSIBLE# call Fn.11 "%~1" "\x" or call Fn.11 "%~1" "\ "
 if not %forbiden%==Y && set forbiden=Y &; call Fn.11 "%~1" "\\" || set forbiden=
 if %forbiden%==Y && endlocal && set forbiden=%forbiden% && goto :eof
 call Fn.11 "%~1" "*" && endlocal && set forbiden=Y && goto :eof
 call Fn.11 "%~1" ":" && endlocal && set forbiden=Y && goto :eof
 call Fn.11 "%~1" "<" && endlocal && set forbiden=Y && goto :eof
 call Fn.11 "%~1" "?" && endlocal && set forbiden=Y && goto :eof
-#BADTOO#call Fn.11 "%~1" " " || call Fn.11 "%~1" "\x5C" && endlocal && set forbiden=Y && goto :eof
 ## Removes'\'-sameas'\ '#echo -e $[0x07]%~1 | set arg=
-#TODO??#if /i %mode%==makelfn && set forbiden=Y && set /u "arg=%~1" &; call Fn.11 "%arg%" "CON" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || call Fn.11 "%arg%" "" || set forbiden=
 endlocal && set forbiden=%forbiden%
 goto :eof
 ::
@@ -172,24 +159,14 @@ call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=
 call :checkforbiddenchars "%~3" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~3"" && set result= && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path1=%~p2" &; if "%path1%"=="/" && set "sfnpath1=/"
+echo -e "%~p2" | set path1= &; set "path1=%path1:~1,-1%" &; if "%path1%"=="/" && set "sfnpath1=/" ! if "%path1:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path1%"" && endlocal && set result= && goto :eov ! if "%path1:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path1%"" && endlocal && set result= && goto :eov
 if not exist sfnpath1 && call Fn.11 "%path1%" "/ " && endlocal && set "message=Abort: no starting spaces allowed in directories in source path "%path1%"" && set result= && goto :eov
-set "name1=%~n2" &; if not exist name1 && endlocal && set "message=Abort: source in "%~2" is invalid" && set result= && goto :eov
-if "%name1:~-1,1%"=="\" && set "name1=%name1:~0,-1%"
-set "ext1=%~x2" &; if "%ext1%"=="." && set ext1=
-if "%ext1:~-1,1%"=="\" && set "ext1=%ext1:~0,-1%"
-if "%ext1%"=="." && set ext1=
-set "path2=%~p3" &; if "%path2%"=="/" && set "sfnpath2=/"
+echo -e "%~n2" | set name1= &; set "name1=%name1:~1,-1%" &; if not exist name && set "message=Abort: file name1 is missing" && endlocal && set result=0 && goto :eov ! if "%name1:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name1%"" && endlocal && set result= && goto :eov ! if "%name1:~-1,1%"=="\" && set "name1=%name1:~0,-1%"
+echo -e "%~x2" | set ext1= &; if exist ext1 && set "ext1=%ext1:~1,-1%" &; if "%ext1%"=="." && set ext1= ! if "%ext1:~-1,1%"=="\" && set "ext1=%ext1:~0,-1%"
+echo -e "%~p3" | set path2= &; set "path2=%path2:~1,-1%" &; if "%path2%"=="/" && set "sfnpath2=/" ! if "%path2:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path2%"" && endlocal && set result= && goto :eov ! if "%path2:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path2%"" && endlocal && set result= && goto :eov
 if not exist sfnpath2 && call Fn.11 "%path2%" "/ " && endlocal && set "message=Abort: no starting spaces allowed in directories in target path "%path2%" && set result= && goto :eov
-set "name2=%~n3" &; if not exist name2 && endlocal && set "message=Abort: target missing && set result= && goto :eov
-if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
-set "ext2=%~x3" &; if "%ext2%"=="." && set ext2=
-if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
-if "%ext2%"=="." && set ext2=
-echo -e "%name1%" | set name1= &; set "name1=%name1:~1,-1%"
-if exist ext1 && echo -e "%ext1%" | set ext1= &; set "ext1=%ext1:~1,-1%"
-echo -e "%name2%" | set name2= &; set "name2=%name2:~1,-1%"
-if exist ext2 && echo -e "%ext2%" | set ext2= &; set "ext2=%ext2:~1,-1%"
+echo -e "%~n3" | set name2= &; set "name2=%name2:~1,-1%" &; if not exist name2 && set "message=Abort: file name2 is missing" && endlocal && set result=0 && goto :eov ! if "%name2:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
+echo -e "%~x3" | set ext2= &; if exist ext2 && set "ext2=%ext2:~1,-1%" &; if "%ext2%"=="." && set ext2= ! if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
 :rennospacedotloop
 ## Starting spaces in name not allowed in Target
 if exist ext1 && call Fn.11 "%ext1:~-1,1%" " " && set "ext1=%ext1:~0,-1%" && goto :rennospacedotloop
@@ -314,16 +291,11 @@ if not "%~3"=="" && endlocal && set "message=Abort: too many arguments, argument
 if "%~2"=="" && endlocal && set "message=Abort: target is missing" && set result= && goto :eov
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~2"" && set result= && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
-if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set reuslt= goto :eov
-set "path=%~p2" &; if "%path%"=="/" && set "sfnpath=/"
+if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
+echo -e "%~p2" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && endlocal && set "message=Abort: no starting '.' allowed in "%path%"" && set result= && goto :eov ! if "%path:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%path%"" && set result= && goto :eov
 ## Starting spaces allowed in PATH!
-set "name=%~n2" &; if not exist name && endlocal && set "message=Abort: name-part of filename must exist" && set result= && goto :eov
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set "ext=%~x2" &; if "%ext%"=="." && set ext=
-if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
-echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
+echo -e "%~n2" | set name= &; set "name=%name:~1,-1%" &; if not exist name && endlocal && set "message=Abort: name-part of filename must exist" && set result= && goto :eov ! if "%name:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%name%"" && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x2" | set ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :delnospacedotloop
 ## Starting spaces allowed in NAME!
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :delnospacedotloop
@@ -339,7 +311,7 @@ call :checksfn "%name%%%ext%" &; if not %SFN%==N && set "sfnfile=%name%%%ext%"
 if not exist sfnfile && ATTRIBFT.LLL getsfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && set /u sfnfile=%result% && set result= && set output= ! endlocal && set "message=Abort: "%name%%%ext%" not found" && set result= && goto :eov
 if exist sfnfile && if not %SFN%==N &; setlocal && ATTRIBFT.LLL getlfn input="%output1%" "%device%%%sfnpath%%%sfnfile%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile=%result%" && set result= && set CASE=Y
 fat dir %device%%%sfnpath%%%sfnfile% > nul && ls %device%%%sfnpath%%%sfnfile%/ > nul && endlocal && echo -e Abort: directory "%device%%%path%%%name%%%ext%" is not empty && set result=0 && goto :eov
-if %del%==r && ATTRIBFT.LLL isreadonly input="%output1%" "%device%%%sfnpath%%%sfnfile%" &; if %result%==1 && set result= && set output= &; ATTRIBFT.LLL setattrib input="%output1%" "%device%%%sfnpath%%%sfnfile%" "-r" &; if %result%==1 && set result= ! endlocal && echo Abort: failed to remove attribute 'read-only' && set result=0 && goto :eov
+if %del%==r && ATTRIBFT.LLL isreadonly input="%output1%" "%device%%%sfnpath%%%sfnfile%" &; if %result%==1 && set result= && set output= &; ATTRIBFT.LLL setattrib input="%output1%" "%device%%%sfnpath%%%sfnfile%" "-r" &; if %result%==1 && set result= ! endlocal && set "message=Abort: failed to remove attribute 'read-only'" && set result=0 && goto :eov
 fat del %device%%%sfnpath%%%sfnfile% && set success=Y
 if %success%==Y && set result=1 && if %SFN%==N && if not exist lfnfile && set result= &; ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath%%%name%%%ext%" &; if exist result && set DELLFN=N && set result=1 ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set message= && set result=1 && set DELLFN=N
 if %success%==Y && if not %DELLFN%==N && if exist lfnfile && if %CASE%==Y && set result= &; ATTRIBFT.LLL dellfn input="%output1%" "%device%%%sfnpath%%%lfnfile%" &; if exist result && set result=1 ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set message= && set result=1
@@ -359,29 +331,17 @@ call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=
 call :checkforbiddenchars "%~3" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~3"" && set result= && goto :eov
 set device1=%~d2 &; fat info %device1% > nul && set filesysS=fat
 if %device1%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path1=%~p2" &; if "%path1%"=="/" && set "sfnpath1=/"
+echo -e "%~p2" | set path1= &; set "path1=%path1:~1,-1%" &; if "%path1%"=="/" && set "sfnpath1=/" ! if "%path1:~1,1%"=="." && endlocal && set "message=Abort: no starting '.' allowed in "%path1%"" && set result= && goto :eov ! if "%path1:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%path1%"" && set result= && goto :eov
 if not exist sfnpath1 && call Fn.11 "%path1%" "/ " && endlocal && set "message=Abort: no starting spaces allowed in directories in source path "%path1%"" && set result= && goto :eov
-set "name1=%~n2" &; if not exist name1 && endlocal && set "message=Abort: no filename given (source)" && set result= && goto :eov
-if "%name1:~-1,1%"=="\" && set "name1=%name1:~0,-1%"
-set "ext1=%~x2" &; if "%ext1%"=="." && set ext1=
-if exist ext1 &; if "%ext1:~-1,1%"=="\" && set "ext1=%ext1:~0,-1%"
-if exist ext1 &; if "%ext1%"=="." && set ext1=
+echo -e "%~n2" | set name1= &; if exist name1 && set "name1=%name1:~1,-1%" &; if "%name1:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%name1%"" && set result= && goto :eov ! if "%name1:~-1,1%"=="\" && set "name1=%name1:~0,-1%"
+echo -e "%~x2" | set ext1= &; if exist ext1 && set "ext1=%ext1:~1,-1%" &; if "%ext1%"=="." && set ext1= ! if "%ext1:~-1,1%"=="\" && set "ext1=%ext1:~0,-1%"
 set device2=%~d3 &; fat info %device2% > nul || endlocal && set "message=Abort: target "%device2%" is not a fat device" && set result= && goto :eov
 if %device2%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path2=%~p3" &; if "%path2%"=="/" && set "sfnpath2=/"
+echo -e "%~p3" | set path2= &; set "path2=%path2:~1,-1%" &; if "%path2%"=="/" && set "sfnpath2=/" ! if "%path2:~1,1%"=="." && endlocal && set "message=Abort: no starting '.' allowed in "%path2%"" && set result= && goto :eov ! if "%path2:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%path2%"" && set result= && goto :eov
 if not exist sfnpath2 && call Fn.11 "%path2%" "/ " && endlocal && set "message=Abort: no starting spaces allowed in directories in target "%path2%"" && set result= && goto :eov
-set "name2=%~n3"
-if exist name2 &; if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
-set "ext2=%~x3" &; if "%ext2%"=="." && set ext2=
-if exist ext2 &; if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
-if exist ext2 &; if "%ext2%"=="." && set ext2=
-if not exist sfnpath1 && echo -e "%path1%" | set path1= &; set "path1=%path1:~1,-1%"
-echo -e "%name1%" | set name1= &; set "name1=%name1:~1,-1%"
-if exist ext1 && echo -e "%ext1%" | set ext1= &; set "ext1=%ext1:~1,-1%"
-if not exist sfnpath2 && echo -e "%path2%" | set path2= &; set "path2=%path2:~1,-1%"
-if exist name2 &; echo -e "%name2%" | set name2= &; set "name2=%name2:~1,-1%"
-if exist ext2 && echo -e "%ext2%" | set ext2= &; set "ext2=%ext2:~1,-1%"
-if /i "%~f2"=="%~f3" && set "message=Abort: can not copy file to itself" &; if not "%name1%%%ext1%"=="%name2%%%ext2%" && set "message=Abort: can not copy file to itself, to change filename use function <ren>" ! set "message=%message%" &; endlocal && set "message=%message%" && set result= && goto :eov
+echo -e "%~n3" | set name2= &; if exist name2 && set "name2=%name2:~1,-1%" &; if "%name2:~1,1%"=="(" && endlocal && set "message=Abort: no starting '(' allowed in "%name%"" && set result= && goto :eov ! if "%name2:~-1,1%"=="\" && set "name2=%name2:~0,-1%"
+echo -e "%~x3" | set ext2= &; if exist ext2 && set "ext2=%ext2:~1,-1%" &; if "%ext2%"=="." && set ext2= ! if "%ext2:~-1,1%"=="\" && set "ext2=%ext2:~0,-1%"
+if /i "%device1%%%path1%%%name1%%%ext1%"=="%device2%%%path2%%%name2%%%ext2%" && set "message=Abort: can not copy file to itself" &; if not "%name1%%%ext1%"=="%name2%%%ext2%" && set "message=%message%, to change filename use function <ren>" ! set "message=%message%" &; endlocal && set "message=%message%" && set result= && goto :eov
 :copynospacedotloop
 if exist ext1 && call Fn.11 "%ext1:~-1,1%" " " && set "ext1=%ext1:~0,-1%" && goto :copynospacedotloop
 if not exist ext1 && call Fn.11 "%name1:~-1,1%" " " && set "name1=%name1:~0,-1%" && goto :copynospacedotloop
@@ -475,14 +435,12 @@ if %del%==/r && if %o%==/o && if not %file2%==1 &; if exist %device2%%%sfnpath2%
 ## Used to check if file-name on source is a directory (not on NTFS) and exit if argsize not exist
 debug msg=1
 raw cat --length=0 %device1%/"%path1:~1%%%name1%%%ext1%" | set argsize=
-#BADifSpace#raw cat --length=0 %device1%%%path1%%%name1%%%ext1% | set argsize=
 debug msg=0
 if not exist argsize && endlocal && set "message=Abort: "%device1%%%path1%%%name1%%%ext1%" is a directory" && set result= && goto :eov
 ## Get filesize if not a directory
 raw cat --length=0 %device1%/"%path1:~1%%%name1%%%ext1%" > nul ;; set /a argsize=%@retval% > nul
 ## Abort if filesize on not-fat source is not >=0 and <4GB
 if not %argsize%>=0 && endlocal && set "message=Abort: filesize of "%device1%%%path1%%%name1%%%ext1%" is 4GB or higher" && set result= && goto :eov ! set /a argsize=%argsize%&0xffffffff > nul
-#BADifSpace#raw cat --length=0 %device1%%%path1%%%name1%%%ext1% > nul ;; set /a argsize=%@retval%&0xffffffff > nul
 ## Make sfnfile1 on non-FAT source if not exist sfnifle1/2 AND if filename on source is LFN
 if not /i %filesysS:~0,3%==fat && if not exist sfnfile && if not exist sfnfile1 && if not exist sfnfile2 && if %SFN1%==N &; crc32 %device1%/"%path1:~1%%%name1%%%ext1%" | set CRC32src=
 if not /i %filesysS:~0,3%==fat && if not exist sfnfile && if not exist sfnfile1 && if not exist sfnfile2 && if %SFN1%==N &; call :makesfnfile "%device2%%%path2%%%name1%%%ext1%" "file" "CRC32=%CRC32src%" &; if exist sfnfile && set /u sfnfile1=%sfnfile% && set /u sfnfile=%sfnfile% && set lfn= && set CRC32src= ! endlocal && set "message=Abort: no available Short File Name found for "%device1%%%path1%%%name1%%%ext1%"" && set result= && goto :eov
@@ -512,20 +470,20 @@ if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfn
 ## Retry once if retry=1
 if %retry%==1 && if exist sfnfile2 &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2%%%sfnfile2% > nul && set success=Y && set retry= ! set success=N
 ## Exit if no success
-if %success%==N && endlocal && set result=0 && goto :eov
+if %success%==N && endlocal && set result= && goto :eov
 ## Copying sfnfile2 ready: goto :makelfncopy
 if %success%==Y && if exist sfnfile2 && goto :makelfncopy ! set retry= && set success=
 ## Copy sfnfile1 if not exist sfnfile2 and if direcories not equal; retry once
 if not exist sfnfile2 && if not /i %device1%%%sfnpath1%==%device2%%%sfnpath2% &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% && set success=Y ! set success=N && set retry=1
 if %retry%=1 &; if not exist sfnfile2 && if not /i %device1%%%sfnpath1%==%device2%%%sfnpath2% &; fat copy %o% %device1%%%sfnpath1%%%sfnfile1% %device2%%%sfnpath2% && set success=Y ! set success=N && set retry=1
 ## Abort if no success
-if %success%==N && endlocal && set result=0 && goto :eov
+if %success%==N && endlocal && set result= && goto :eov
 :makelfncopy
 ## Set sfnfile2 if not exist to sfnfile1
 if not exist sfnfile2 && set sfnfile2=%sfnfile1%
 ## Always copy Modification Date/ -Time from FAT-source
 if %success%==Y && if /i %filesysS:~0,3%==fat &; setlocal && set result= && ATTRIBFT.LLL getdate input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set result= && ATTRIBFT.LLL setdate input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%result%" ! set "message=Failed to get modication date from "%device1%%%sfnpath1%%%sfnfile1%"" &; if not exist result && endlocal && set "message=%message%" ! endlocal
-if %success%==Y && if /i %filesysS:~0,3%==fat &; setlocal && set result= && ATTRIBFT.LLL gettime input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set result= && ATTRIBFT.LLL settime input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%result%" ! set "message=Failed to get modication time from "%device1%%%sfnpath1%%%sfnfile1%"" &; if not exist result && endlocal && set "message="%message%" ! endlocal
+if %success%==Y && if /i %filesysS:~0,3%==fat &; setlocal && set result= && ATTRIBFT.LLL gettime input="%output1%" "%device1%%%sfnpath1%%%sfnfile1%" &; if exist result && set result= && ATTRIBFT.LLL settime input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%result%" ! set "message=Failed to get modication time from "%device1%%%sfnpath1%%%sfnfile1%"" &; if not exist result && endlocal && set "message=%message%" ! endlocal
 ## Write attributes back on fat-target with '/o:r'
 if %success%==Y && if not exist a && if exist attrib && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "%attrib%" &; if exist result && set result= && set attrib= && set output= ! set "message=Failed to set attribute(s) %attrib% on "%device2%%%sfnpath2%%%sfnfile2%"" && set attrib= && set message=
 ## Write attributes from fat-source to target with '/a'
@@ -534,14 +492,12 @@ if %a%==/a && if /i %filesysS:~0,3%==fat &; set attrib= && call :setsourceattrib
 if not exist name2 && if exist %device2%%%sfnpath2%%%sfnfile2% && set result= && set file2=1 &; setlocal && ATTRIBFT.LLL getlfn input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; endlocal && set "result=%result%" &; if exist result && set "lfnfile2=%result%" && set LFN2=Y && set result=
 ## set file2=1 if sfnfile2 exists
 if exist name2 && if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1
-#BAD#if %CASE2%==Y && if exist name2 && set SFN2=N && set "lfnfile=%name2%%%ext2%" && if exist %device2%%%sfnpath2%%%sfnfile2% && set file2=1
 ## Delete LFN (lfnfile2) on target AND to be overwritten with other LFN from target command-line
 if %success%==Y && set result=1 && if %SFN2%==N && if %LFN2%==Y && if exist name2 && if exist lfnfile2 && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! set output=
 ## Delete LFN (lfnfile2) on target AND to be overwritten with other LFN from source command-line
 if %success%==Y && set result=1 && if %LFN1%==Y && if %LFN2%==Y && if not exist name2 && if exist lfnfile2 && if not "%lfnfile1%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! set output=
 ## Delete LFN on target to be overwritten if existing target filename2 on command-line is SFN with CASE (MUST be different from existing case!) AND target lfnfile2 exists
 if %success%==Y && set result=1 && if exist name2 && if exist lfnfile2 && if %CASE2%==Y && if %LFN2%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! set output=
-#BAD#if %success%==Y && set result=1 && if %SFN2%==N && if exist name2 && if %CASE2%==Y && if %LFN2%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && if not %DELLFN2%==N && set result= &; ATTRIBFT.LLL dellfn input="%output2%" "%device2%%%sfnpath2%%%lfnfile2%" &; if exist result && set DELLFN2=N && set result= && set output= ! if "%message:~0,18% %message:~-9,9%"=="Directory-entry of not found" && set DELLFN2=N && set message= && set output= ! set output=
 ## Make LFN if target filename2 on command-line is LFN AND no LFN on source is found (i.e. non-fat or not exist)
 if %success%==Y && set result=1 && if not %MAKELFN%==N &; if exist name2 && if %SFN2%==N && if not %LFN1%==Y && if not "%name2%%%ext2%"=="%lfnfile2%" && set result= &; ATTRIBFT.LLL makelfn input="%output2%" "%device2%%%sfnpath2%%%name2%%%ext2%" "%sfnfile2%" &; if exist result && set MAKELFN=N && set output= ! set output=
 ## Make LFN if source filename1 on command-line is LFN AND target filename is empty AND no LFN on source is found (i.e. non-fat or not exist)
@@ -566,12 +522,9 @@ if exist NULL && if not "%~4"=="" && endlocal && set "message=Abort: too many ar
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~2"" && set result= && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path=%~p2"
-set "name=%~n2"
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set "ext=%~x2" &; if "%ext%"=="." && set ext=
-if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
+echo -e "%~p2" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path%"" && endlocal && set result= && goto :eov ! if "%path:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path%"" && endlocal && set result= && goto :eov
+echo -e "%~n2" | set name= &; if exist name && set "name=%name:~1,-1%" &; if "%name:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x2" | set ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :dirnospacedotloop
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :dirnospacedotloop
 if not exist ext && call Fn.11 "%name:~-1,1%" " " && set "name=%name:~0,-1%" && goto :dirnospacedotloop
@@ -634,6 +587,7 @@ set temprslt=1
 goto :fatdirloop
 ::
 :dirx
+:dira
 setlocal && set *
 set "ARG2=%~2" &; if %ARG2:~0,2%==/a && if not "%~3"=="" && set a=%ARG2% && set ARG2= && shift
 if "%~2"=="" && endlocal && set "message=Abort: device and/ or path missing" && set result= && goto :eov
@@ -644,18 +598,10 @@ call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && goto :eov
 set "mode=%~1"
-set "path=%~p2"
-set /u "name=%~n2"
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set /u "ext=%~x2" &; if "%ext%"=="." && set ext=
-if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
+echo -e "%~p2" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path%"" && endlocal && set result= && goto :eov ! if "%path:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path%"" && endlocal && set result= && goto :eov
+echo -e "%~n2" | set /u name= &; if exist name && set "name=%name:~1,-1%" &; if "%name:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x2" | set /u ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :dirxnospacedotloop
-#NOTANYMORE#if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :dirxnospacedotloop
-#NOTANYMORE#if not exist ext && call Fn.11 "%name:~-1,1%" " " && set "name=%name:~0,-1%" && goto :dirxnospacedotloop
-#NOTANYMORE#if not exist ext && call Fn.11 "%name:~-1,1%" "." && set "name=%name:~0,-1%" && goto :dirxnospacedotloop
-#NOTANYMORE#if "%ext%"=="." && set ext=
-#v0.2#if exist name && set "path=%path%%%name%%%ext%" ! if not "%path%"=="/" && set "path=%path:~0,-1%"
 if "%path%"=="/" && set sfnpath=/
 if not exist sfnpath && echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
 if "%sfnpath%"=="/" && ATTRIBFT.LLL getsfnpath "%device%/" &; if exist result && set "output1=%output%" && set output= && set result= ! endlocal && set "message=%message%" && set result= && goto :eov
@@ -737,7 +683,6 @@ set "testfile=%~nx1"
 if not exist %device%/"%path:~1%%%testfile%" && endlocal && goto :eof
 call Fn.11 "%testfile%" "\x3D" && echo "%testfile%" > (md)%mdbase%+1 && cat --locate=\x3D --replace=\x3F (md)%mdbase%+1 && set qmark=Y && cat (md)%mdbase%+1 | set testfile= &; set "testfile=%testfile:~1,-1%"
 ls %device%/"%path:~1%%%testfile%" | call :case
-#OLD?#if not exist dirname && call Fn.11 "%testname:~1%" "~" && set /u dirname=%testname%
 endlocal && set "name=%name%" && set "ext=%ext%" && set result=%result%
 goto :eof
 ::
@@ -767,7 +712,6 @@ call Fn.11 "%path%" "}" && endlocal && set SFNPATH=N && goto :eof
 call Fn.11 "%path%" "=" && endlocal && set SFNPATH=N && goto :eof
 call Fn.11 "%path%" "?" && endlocal && set SFNPATH=N && goto :eof
 echo "%path%" > (md)%mdbase%+1
-#NOTNEEDEDANYMORE#call Fn.11 "%path%" " " && call :lsspaces
 cat --locate=/ --replace=\x20 (md)%mdbase%+1 > nul
 cat --locate=\x22 --replace=\x20 (md)%mdbase%+1 > nul
 cat --locate=\x3D --replace=\x3F (md)%mdbase%+1 > nul && set qmark=Y
@@ -822,7 +766,7 @@ raw crc32 %file1% > nul ;; set /A CRC32SRC=%@retval%&0xffffffff > nul
 if exist %device2%%%sfnpath2%%%sfnfile2% &; raw crc32 %device2%%%sfnpath2%%%sfnfile2% > nul &; set /A CRC32TGT=%@retval%&0xffffffff > nul &; if %CRC32SRC%==%CRC32TGT% && endlocal && set success=Y && goto :eof
 ## Unsigned value to prevent negative argsize with almost 4 GB-file above 0x7FFFFFF
 if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %del%==/r && setlocal && ATTRIBFT.LLL getattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" &; %result% &; if %r%==r && endlocal && set attrib=r ! endlocal && set attrib=
-if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %attrib%==r && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if not exist result && endlocal && set "message=Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile2%"" && set success= && set result= && goto :eov ! set output=
+if exist %device2%%%sfnpath2%%%sfnfile2% && if %o%==/o && if %attrib%==r && ATTRIBFT.LLL setattrib input="%output2%" "%device2%%%sfnpath2%%%sfnfile2%" "-r" &; if not exist result && endlocal && set "message=Abort: failed to remove attribute 'read-only' on "%device2%%%sfnpath2%%%sfnfile2%"" && set success= && set result= && goto :eof ! set output=
 errorcheck off
 if exist %device2%%%sfnpath2%%%sfnfile2% &; if %o%==/o && fat del %device2%%%sfnpath2%%%sfnfile2% > nul && set deleted=Y ! endlocal && set "message=Abort: can not delete "%device2%%%sfnpath2%%%sfnfile2%" without switch '/o'" && set result= && goto :eof
 if exist %device2%%%sfnpath2%%%sfnfile2% && if not %deleted%==Y && endlocal && set "message=Error: can not delete "%device2%%%sfnpath2%%%sfnfile2%"" && set success= && set result= && goto :eof
@@ -853,7 +797,6 @@ call Fn.11 "%arg%" " " && endlocal && set SFN=N && goto :eof
 call Fn.11 "%argname%" "." && endlocal && set SFN=N && goto :eof
 if not %SFN%==N && set SFN=N &; call Fn.11 "%arg%" "[" || call Fn.11 "%arg%" "]" || call Fn.11 "%arg%" "{" || call Fn.11 "%arg%" "}" || call Fn.11 "%arg%" "+" || call Fn.11 "%arg%" "=" || call Fn.11 "%arg%" ";" || call Fn.11 "%arg%" "," || set SFN=
 if not %SFN%==N && set /u "HIGHCASE=%argname%%%argext%" &; if not "%HIGHCASE%"=="%argname%%%argext%" && set CASE=Y
-#TooMuch#if not %SFN%==N && set SFN=N &; call Fn.11 "%arg%" "[" || call Fn.11 "%arg%" "]" || call Fn.11 "%arg%" "{" || call Fn.11 "%arg%" "}" || call Fn.11 "%arg%" "%" || call Fn.11 "%arg%" "-" || call Fn.11 "%arg%" "+" || call Fn.11 "%arg%" "=" || call Fn.11 "%arg%" ";" || call Fn.11 "%arg%" "," || call Fn.11 "%arg%" "/" || set SFN=Y
 endlocal && set SFN=%SFN% && set CASE=%CASE%
 goto :eof
 ::
@@ -865,8 +808,6 @@ set "argname=%~n1" &; set /a namelen=%@retval% > nul
 set "argext=%~x1" &; if exist argext && set "argext=%argext:~1%"
 set mode=%~2
 if not "%~3"=="CRC32" && set /u "sfntest=%~nx3" ! set "CRC32src=%~4"
-#ORG#set /u "sfntest=%~nx3"
-#MAYBE#if %mode%==file && if not "%~3"=="" && set o=%~3
 ## SplitSemicolonSuffixOffIfSource=ISO/UDF
 if exist argext && call Fn.11 "%argext%" ";" &; raw cat --skip=0x8001 --locatei=CD001 --length=5 %device%%0+17 > nul ! raw cat --skip=0x8001 --locatei=BEA --length=3 %device%%0+17 > nul &; echo -n > (md)0x300+1 && pause --wait=0 "%argext%" > (md)0x300+1 && cat --locate=\x22 --replace=\x0A (md)0x300+1 > nul && cat --locate=; (md)0x300+1 > nul &; set /a suffixln=%?% &; cat --length=%suffixln% (md)0x300+1 | set argext= && cat --skip=%suffixln% (md)0x300+1 | set clsuffix= &; checkrange 1:32768 calc %clsuffix:~1% || set "argext=%argext%%%clsuffix%" && set clsuffix=
 if exist argext && set "lfn=%argname%.%argext%" ! set "lfn=%argname%"
@@ -877,19 +818,15 @@ cat --locate=\x2E --replace=\x20 (md)0x300+1 > nul && set dosuffix=Y
 :makesfnfileloop
 cat --locate=\x22 --replace=\x0A (md)0x300+1 > nul
 cat --locate=+ --replace=_ (md)0x300+1 > nul && set dosuffix=Y
-#NOTLFN#cat --locate=# --replace=_ (md)0x300+1 > nul
 cat --locate=[ --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=] --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate={ --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=} --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=% --replace=_ (md)0x300+1 > nul && set dosuffix=Y
-#NOTLFN#cat --locate=- --replace=_ (md)0x300+1 > nul
 cat --locate=\x3D --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=\x3F --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=; --replace=_ (md)0x300+1 > nul && set dosuffix=Y
 cat --locate=, --replace=_ (md)0x300+1 > nul && set dosuffix=Y
-#OLD#cat --locate=. --replace=_ (md)0x300+1 > nul
-#OLD#cat --locate= --replace=_ (md)0x300+1 > nul
 cat --locate=\x20 (md)0x300+1 > nul && set dosuffix=Y && call :removespaces
 if not %done%==Y && cat --skip=1 (md)0x300+1 | set name= && if exist argext && pause --wait=0 "%argext%" > (md)0x300+1 && set done=Y && goto :makesfnfileloop
 if %done%==Y && cat --locate=\x20 (md)0x300+1 > nul && set dosuffix=Y && call :removespaces
@@ -898,7 +835,6 @@ if exist ext && set /u "ext=%ext%" &; set /a extlen=%@retval% > nul &; if %extle
 if %mode%==name && set /u "name=%name%" &; set /a namelen=%@retval% > nul &; if not %namelen%>=9 && if not %dosuffix%==Y &; if "%name%%%ext%"=="%sfntest%" && endlocal && set "sfnfile=%sfntest%" && goto :eof ! endlocal && set sfnfile= && goto :eof
 if %mode%==name && set "name=%name:~0,6%" &; if %name%%~1%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~2%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~3%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~4%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! set "name=%name%?"
 if %mode%==name && if "%name:~-1,1%"=="?" && ATTRIBFT.LLL calclfnhash "%lfn%" &; if exist result && set /u "name=%name:~0,2%%%result%" &; if %name%%~1%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~2%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~3%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~4%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~5%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~6%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~7%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~8%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! if %name%%~9%ext%==%sfntest% && endlocal && set sfnfile=%sfntest% && goto :eof ! set "name=%name%?"
-#BAD?????#if %mode%==name && endlocal && set sfnfile=%sfnfile%
 set done= && set "name=%name%" &; set /a namelen=%@retval% > nul
 if not %namelen%>=9 && if %dosuffix%==Y && set "name=%name:~0,6%"
 if %namelen%>=9 && set "name=%name:~0,6%" && set dosuffix=Y
@@ -957,15 +893,9 @@ setlocal && set *
 call :checkforbiddenchars "%~2" &; if %forbiden%==Y && endlocal && set "message=Abort: forbidden chars in "%~2"" && set result= && goto :eov
 set device=%~d2 &; fat info %device% > nul || endlocal && set "message=Abort: target "%device%" is not a fat device" && set result= && goto :eov
 if %device%==(md) && endlocal && set "message=Abort: device "%device%" is not valid" && set result= && goto :eov
-set "path=%~p2"
-set "name=%~n2" &; if not exist name && endlocal && set "message=Abort: filename is missing" && set result= && goto :eov
-if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
-set "ext=%~x2" &; if "%ext%"=="." && set ext=
-if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
-if "%ext%"=="." && set ext=
-echo -e "%path%" | set path= &; set "path=%path:~1,-1%"
-echo -e "%name%" | set name= &; set "name=%name:~1,-1%"
-if exist ext && echo -e "%ext%" | set ext= &; set "ext=%ext:~1,-1%"
+echo -e "%~p2" | set path= &; set "path=%path:~1,-1%" &; if "%path%"=="/" && set "sfnpath=/" ! if "%path:~1,1%"=="." && set "message=Abort: no starting '.' allowed in "%path%"" && endlocal && set result= && goto :eov ! if "%path:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%path%"" && endlocal && set result= && goto :eov
+echo -e "%~n2" | set name= &; set "name=%name:~1,-1%" &; if not exist name && set "message=Abort: file name is missing" && endlocal && set result=0 && goto :eov ! if "%name:~1,1%"=="(" && set "message=Abort: no starting '(' allowed in "%name%"" && endlocal && set result= && goto :eov ! if "%name:~-1,1%"=="\" && set "name=%name:~0,-1%"
+echo -e "%~x2" | set ext= &; if exist ext && set "ext=%ext:~1,-1%" &; if "%ext%"=="." && set ext= ! if "%ext:~-1,1%"=="\" && set "ext=%ext:~0,-1%"
 :dellfnnospacedotloop
 if exist ext && call Fn.11 "%ext:~-1,1%" " " && set "ext=%ext:~0,-1%" && goto :dellfnnospacedotloop
 if not exist ext && call Fn.11 "%name:~-1,1%" " " && set "name=%name:~0,-1%" && goto :dellfnnospacedotloop
@@ -1002,12 +932,6 @@ if %h%==h && set h=+h ! set h=-h
 if %a%==a && set a=+a ! set a=-a
 set "attrib=%r%%%s%%%h%%%a%"
 ATTRIBFT.LLL setattrib input="%output2%" "%~2" "%attrib%" &; if exist result && set result= && set output= ! endlocal && set "message=Failed to set attribute(s) %attrib% on "%~2"" && goto :eof
-#ALWAYS#ATTRIBFT.LLL getdate input="%output1%" "%~1" &; if exist result && set moddate=%result% && set result= ! endlocal && set "message=Failed to get modication date from "%~1" && goto :eof
-#ALWAYS#ATTRIBFT.LLL setdate input="%output2%" "%~2" "%moddate%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication date '%moddate%' on "%~2"" && goto :eof
-#ALWAYS#ATTRIBFT.LLL gettime input="%output1%" "%~1" &; if exist result && set modtime=%result% && set result= ! endlocal && set "message=Failed to get modication time from "%~1"" && goto :eof
-#ALWAYS#ATTRIBFT.LLL settime input="%output2%" "%~2" "%modtime%" &; if exist result && set result= ! endlocal && set "message=Failed to set modication time '%modtime%' on "%~2"" && goto :eof
-#NOYTANYMORE#ATTRIBFT.LLL getaccdate input="%output1%" "%~1" &; if exist result && set laccdate=%result% && set result= ! endlocal && set "message=Failed to get last access date from "%~1"" && goto :eof
-#NOYTANYMORE#ATTRIBFT.LLL setaccdate input="%output2%" "%~2" "%laccdate%" &; if exist result && set result= ! endlocal && set "message=Failed to set last access date '%laccdate%' on "%~2"" && goto :eof
 ATTRIBFT.LLL getntcasebyte input="%output1%" "%~1" &; if exist result && set casebyte=%result% && set result= ! endlocal && set "message=Failed to get NT-casebyte from "%~1"" && goto :eof
 if not %casebyte%==0x8 if not %casebyte%==0x10 if not %casebyte%==0x18 |; ATTRIBFT.LLL setntcasebyte input="%output2%" "%~2" "%casebyte%" &; if exist result && set result= ! endlocal && set "message=Failed to set NT-casebyte '%casebyte%' on "%~2"" && goto :eof
 endlocal && set "message=%message%"
@@ -1017,15 +941,12 @@ goto :eof
 beep 0 1
 read 0x41a > nul &; set /A head=%@retval%&0xff > nul &; if %head%>=0x20 && set /A lastmem=%head%+0x400-2 > nul ! set /A lastmem=0x43C > nul &; read %lastmem% > nul &; set /A lastkey=%@retval%&0xff > nul
 if "%~1"=="" &; if %lastkey%==0x1B && set lastkey=0x71 && goto :eof ! goto :eof
-#NONEED#if not exist ls && if "%~1"=="Esc" && if not %lastkey%==0x1B && goto :eof
-#NONEED#if exist ls && if "%~1"=="Esc" && if not %lastkey%==0x1B && if not %lastkey%==0x51 && if not %lastkey%==0x71 && goto :eof
 if "%~1"=="Esc" && if not %lastkey%==0x1B && goto :eof
 setlocal && call :Fn.4 &; endlocal && set hORG=%h% && set hINT=%h% && set vORG=%v% && set vINT=%v%
 if not %hORG%==0 && setlocal && echo && call :Fn.4 &; endlocal && set hINT=%h% && set vINT=%v% &; if %vINT%==%vORG% && set /a vORG=%vORG%-1
 echo -n $[0x0F][Hit Q or Esc to quit, other key to continue] && pause --test-key &; set /A lastkey=%@retval%&0xff && call :Fn.5 %hINT% %vINT% && echo -n -e \x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20 && call :Fn.5 %hORG% %vORG%
 if %lastkey%==0x1B && set lastkey=0x71
 if not %lastkey%==0x51 if not %lastkey%==0x71 || goto :eof ! set lastkey=
-#NOTSOGOOD#call :Fn.5 %hORG% %vORG% && set lastkey= && goto :eof
 goto :eof
 ::
 :Fn.4
@@ -1054,7 +975,7 @@ if "%~1"=="smallhelp" && echo Dependency: ATTRIBFT.LLL && goto :eof
 setlocal
 pager status > nul ;; set /a pagerst=%@retval% > nul
 pager on
-echo FATLFN.LLL v0.3 (20241110), by deomsh
+echo FATLFN.LLL v0.3.1 (20250801), by deomsh
 echo Function: Loosely Linked Library to use Grubutil 'fat' with Long File Names
 echo Available functions: mkfile mkdir ren del copy dir. Extra: dirx dira dellfn
 echo Use 1: FATLFN.LLL mkdir FILE
@@ -1088,7 +1009,7 @@ echo copy => with /o:r ALL found attributes of read-only file on target got rest
 echo $[] With /a ALL attributes found on FAT source-file set on target-file after
 echo $[]  copying (Modification Date and -Time are always copied from FAT source-file) && echo
 echo Returns variable 'result=1' if success, otherwise variable 'message' will exist && echo
-echo Function 'dir' always whole directory, 'dirx' and 'dira' takes 'file', 'ls'-style && echo
+echo Function 'dir' always whole directory, 'dirx' and 'dira' takes 'file' (ls-style)
 echo dir => same output as 'fat dir' except Long File Names only
 echo $[] dir with "> nul" => 'result=0' = empty directory, >=1 counts directory-entries && echo
 echo dirx => Short File Names, filesize and associated Long File Names
@@ -1105,7 +1026,6 @@ echo File Versions:
 echo Grub4Dos 0.4.6a, Grubutil FAT >=15/02/2015 (must be loaded with insmod already)
 echo $[] On FAT32 partition >= 4GB use Grubutil FAT from 2023, april or later
 echo Grub4dos for UEFI: compatible, but soon 'Out of malloc memory' errors
-#OLD#echo Found not compatible with Grub4Dos 0.4.5b / Grub4Dos 0.4.5c
 echo Dependency: Loosely Linked Library ATTRIBFT.LLL (>=v0.9 & Gru4Dos>=20170505)
 echo A Script using FATLFN.LLL must load BOTH LLL's with insmod, NO change of names!
 echo $[] After use of FATLFN.LLL NOT unloaded with delmod and 'debug 1' & 'debug msg=0' && echo
@@ -1135,7 +1055,8 @@ endlocal
 goto :eof
 ::
 :eov
-#NOTinLLL#debug msg=3
-#NOTinLLL#delmod -l fat > nul && delmod fat > nul
-#NOTinLLL#delmod -l attribft.lll > nul && delmod attribft.lll > nul
+call Fn.11 "%INSMOD%" "fat" || delmod -l fat > nul && delmod fat > nul
+call Fn.11 "%INSMOD%" "ATTRIBFT.LLL" || delmod -l attribft.lll > nul && delmod attribft.lll > nul
+set INSMOD=
 if exist message && set result=
+goto :eof
